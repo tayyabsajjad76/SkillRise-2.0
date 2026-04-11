@@ -1,0 +1,164 @@
+@font-face {
+  src: url(fonts/Mont-Bold.ttf);
+  font-family: montbold;
+}
+@font-face {
+  src: url(fonts/Mont-Regular.ttf);
+  font-family: montregular;
+}
+
+* {
+  margin: 0px;
+  padding: 0px;
+}
+
+p {
+  font-family: montregular;
+}
+
+h1 {
+  font-family: montbold;
+  font-size: bold;
+}
+
+h2 {
+  font-family: montbold;
+}
+ul li {
+  font-family: montbold;
+}
+
+.mtt {
+  margin-top: 93px;
+}
+
+.bt .btn {
+  border-radius: 20px;
+  width: 200px;
+}
+.butto {
+  border-radius: 5px;
+  width: 150px;
+  height: 40px;
+}
+.pdr {
+  padding-right: 20%;
+}
+
+.bgpc {
+  background-image: url(./pitcher/just\ card.png);
+  background-size: cover;
+  background-position: center;
+  height: 430px;
+}
+.box {
+  box-shadow: 0px 10px 20px 0px rgb(221, 220, 220);
+  border: 0px;
+}
+
+.mgl {
+  margin-left: 50px;
+  margin-top: 40px;
+}
+.mgo {
+  margin-left: 50px;
+}
+
+.bt {
+  width: 150px;
+  margin-top: 20px;
+  border-radius: 30px;
+}
+
+.bgra {
+  background-image: url(./pitcher/card\ 9.jpg);
+  background-size: cover;
+  height: 500px;
+}
+.bgpd {
+  padding-top: 150px;
+}
+.btnw {
+  width: 200px;
+}
+
+.but a.btn {
+  border-radius: 20px;
+}
+
+.bk {
+  background-color: #f3f4fd;
+}
+
+.bki {
+  background-color: #f3f4fd;
+}
+
+.bkim {
+  background-color: #f1efff;
+}
+.btnbg {
+  background-color: rgba(18, 104, 235, 1);
+  border: 0;
+}
+.btnbg:hover {
+  background-color: black;
+  color: white;
+}
+
+.circle {
+  width: 50px;
+  height: 25px;
+  background-color: #feb938;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #080808;
+}
+
+.circle2 {
+  width: 55px;
+  height: 25px;
+  background-color: #5dc4c0;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #080808;
+}
+
+.circle3 {
+  width: 40px;
+  height: 25px;
+  background-color: #ae7eba;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  color: #080808;
+}
+
+.line ul li {
+  list-style: none;
+  display: flex;
+}
+
+.line ul li p {
+  padding-left: 15px;
+}
+
+.line ul li i {
+  font-size: x-large;
+  color: #0d6efd;
+}
+
+.cd .card {
+  box-shadow: 5px 5px 5px rgb(170, 170, 170);
+}
+.hight {
+  height: 33px;
+}
