@@ -1,0 +1,43 @@
+<!-- RESUME -->
+<div class="section-page" id="page-resume">
+  <div class="sec-label">AI Resume Builder</div>
+  <div class="sec-title">Build Your Professional CV</div>
+  <div class="sec-desc">AI fills your resume based on your platform activity. Edit and download as PDF.</div>
+  <div class="row2">
+    <div class="full-card">
+      <div class="card-title-row"><h3>Edit Your Details</h3><button class="btn btn-accent btn-sm" id="resumeUpdateBtn"><i class="fa-solid fa-wand-magic-sparkles"></i>Update</button></div>
+      <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="rv-name" value="Tayyab Sajjad" /></div>
+      <div class="form-group"><label class="form-label">Role / Title</label><input class="form-input" id="rv-role" value="Full Stack Developer" /></div>
+      <div class="form-group"><label class="form-label">Contact Info</label><input class="form-input" id="rv-contact" value="tayyab@email.com · linkedin.com/in/tayyab · Lahore, PK" /></div>
+      <div class="form-group"><label class="form-label">Skills</label><input class="form-input" id="rv-skills" value="JavaScript, React.js, Node.js, MongoDB, Express, HTML/CSS, Git" /></div>
+      <div class="form-group"><label class="form-label">Education</label><input class="form-input" id="rv-edu" value="BS Computer Science — UET Lahore (2022–2026)" /></div>
+      <div class="form-group">
+        <label class="form-label">Projects (one per line)</label>
+        <textarea class="form-textarea" id="rv-projects" rows="3">Skill Rise 2.0 — AI student platform (React + Node.js)
+REST API Task Manager — Node.js + MongoDB + JWT
+Portfolio Website — HTML/CSS/JS with animations</textarea>
+      </div>
+      <button class="btn btn-primary" id="resumePreviewBtn"><i class="fa-solid fa-rotate"></i>Update Preview</button>
+    </div>
+    <div class="full-card">
+      <div class="card-title-row"><h3>Live CV Preview</h3><button class="btn btn-outline btn-sm"><i class="fa-solid fa-download"></i>Download PDF</button></div>
+      <div class="resume-preview" id="resumePreview">
+        <div class="rv-name" id="p-name">Tayyab Sajjad</div>
+        <div class="rv-role" id="p-role">Full Stack Developer</div>
+        <div class="rv-contact" id="p-contact">📧 tayyab@email.com · 🔗 linkedin.com/in/tayyab · 📍 Lahore, PK</div>
+        <div class="rv-sec">Skills</div>
+        <div class="rv-item" id="p-skills">JavaScript, React.js, Node.js, MongoDB, Express, HTML/CSS, Git</div>
+        <div class="rv-sec">Education</div>
+        <div class="rv-item" id="p-edu">BS Computer Science — UET Lahore (2022–2026)</div>
+        <div class="rv-sec">Projects</div>
+        <div id="p-projects">
+          <div class="rv-item">• <strong>Skill Rise 2.0</strong> — AI student platform (React + Node.js)</div>
+          <div class="rv-item">• <strong>REST API Task Manager</strong> — Node.js + MongoDB + JWT</div>
+          <div class="rv-item">• <strong>Portfolio Website</strong> — HTML/CSS/JS with animations</div>
+        </div>
+        <div class="rv-sec">Certifications</div>
+        <div class="rv-item">✅ Full Stack Development &nbsp;·&nbsp; ✅ React Fundamentals &nbsp;·&nbsp; ✅ JavaScript Advanced</div>
+      </div>
+    </div>
+  </div>
+</div>
