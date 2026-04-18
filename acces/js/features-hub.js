@@ -1,5 +1,98 @@
 "use strict";
 
+      // ── LOAD DASHBOARD SECTIONS ──
+      const dashboardSections = [
+        "dashboard/home.html",
+        "dashboard/roadmap.html",
+        "dashboard/planner.html",
+        "dashboard/quiz.html",
+        "dashboard/courses.html",
+        "dashboard/resources.html",
+        "dashboard/interview.html",
+        "dashboard/projects.html",
+        "dashboard/resume.html",
+        "dashboard/analytics.html",
+        "dashboard/gamification.html",
+        "dashboard/chat.html",
+      ];
+
+      async function loadDashboard() {
+        const content = document.getElementById("dashboardContent");
+        for (const url of dashboardSections) {
+          const res = await fetch(url);
+          const html = await res.text();
+          const div = document.createElement("div");
+          div.innerHTML = html;
+          content.appendChild(div);
+        }
+        initDashboard();
+      }
+
+      function initDashboard() {
+        try {
+          var user = JSON.parse(
+            localStorage.getItem("sr_current_user") || "null",
+          );
+          if (!user) {
+            window.location.href = "index.html";
+            return;
+          }
+
+          // Sidebar
+          var sbAvatar = document.getElementById("sbAvatar");
+          var sbUserName = document.getElementById("sbUserName");
+          if (sbAvatar)
+            sbAvatar.textContent =
+              user.initials || user.name.charAt(0).toUpperCase();
+          if (sbUserName) sbUserName.textContent = user.name;
+
+          // Topbar
+          var topbarUserName = document.getElementById("topbarUserName");
+          if (topbarUserName)
+            topbarUserName.textContent = user.name.split(" ")[0];
+
+          // Hero
+          var heroUserName = document.getElementById("heroUserName");
+          if (heroUserName) heroUserName.textContent = user.name.split(" ")[0];
+
+          // Chat greeting
+          var chatArea = document.getElementById("chatArea");
+          if (chatArea) {
+            var firstMsg = chatArea.querySelector(".msg.ai");
+            if (firstMsg)
+              firstMsg.textContent =
+                "👋 Hey " +
+                user.name.split(" ")[0] +
+                "! You're on a 14-day streak — incredible! What would you like to work on today?";
+          }
+
+          // Gamification leaderboard
+          var youRow = document.querySelector(".leaderboard-row--you");
+          if (youRow) {
+            youRow.querySelector("span:first-child").innerHTML =
+              "⭐ <strong>You (" + user.name.split(" ")[0] + ")</strong>";
+          }
+
+          // Logout btn
+          var logoutBtn = document.getElementById("logoutBtn");
+          if (logoutBtn) {
+            logoutBtn.addEventListener("click", function () {
+              if (confirm("Logout from Dashboard?")) {
+                window.location.href = "index.html";
+              }
+            });
+          }
+        } catch (e) {
+          window.location.href = "index.html";
+        }
+
+        // Load features-hub.js 
+        var script = document.createElement("script");
+        script.src = "./acces/js/features-hub.js";
+        document.body.appendChild(script);
+      }
+
+      loadDashboard();
 const pageInfo = {
   home: { t: "Dashboard Home", s: "Welcome back, Tayyab 👋" },
   roadmap: { t: "Learning Roadmap", s: "Your personalized AI learning path" },
