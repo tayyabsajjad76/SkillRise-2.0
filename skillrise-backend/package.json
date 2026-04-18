@@ -10,7 +10,8 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.0.0",
     "jsonwebtoken": "^9.0.0",
-    "mongodb": "^6.0.0"
+    "mongodb": "^6.0.0",
+    "@google/generative-ai": "^0.21.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"
