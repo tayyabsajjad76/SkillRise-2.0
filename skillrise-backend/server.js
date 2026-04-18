@@ -1,4 +1,6 @@
 require('dotenv').config();
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 const http = require('http');
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcryptjs');
@@ -119,6 +121,13 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET'  && req.url === '/api/users')  {
       const users = await usersCollection.find({}, { projection: { password: 0 } }).toArray();
       return sendJSON(res, 200, users);
+    }
+    if (req.method === 'POST' && req.url === '/api/chat') {
+      const { message } = await getBody(req);
+      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const result = await model.generateContent(message);
+      const reply = result.response.text();
+      return sendJSON(res, 200, { reply });
     }
     sendJSON(res, 404, { message: 'Route not found' });
   } catch (err) {
