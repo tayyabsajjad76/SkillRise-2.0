@@ -1,6 +1,6 @@
 require('dotenv').config();
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const Groq = require('groq-sdk');
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const http = require('http');
 const { MongoClient } = require('mongodb');
 const bcrypt = require('bcryptjs');
@@ -124,9 +124,11 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && req.url === '/api/chat') {
       const { message } = await getBody(req);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-      const result = await model.generateContent(message);
-      const reply = result.response.text();
+const completion = await groq.chat.completions.create({
+  model: 'llama-3.3-70b-versatile',
+  messages: [{ role: 'user', content: message }],
+});
+const reply = completion.choices[0].message.content;
       return sendJSON(res, 200, { reply });
     }
     sendJSON(res, 404, { message: 'Route not found' });
