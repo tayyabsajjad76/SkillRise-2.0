@@ -124,7 +124,7 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && req.url === '/api/chat') {
       const { message } = await getBody(req);
-      const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
       const result = await model.generateContent(message);
       const reply = result.response.text();
       return sendJSON(res, 200, { reply });
