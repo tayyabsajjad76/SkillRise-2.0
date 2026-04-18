@@ -217,6 +217,50 @@ document.getElementById("nextBtn").addEventListener("click", () => {
   }
 });
 
+
+// ── AI RESUME HELPER ──
+async function generateAIResume() {
+  const btn = document.getElementById("aiResumeBtn");
+  const output = document.getElementById("aiResumeSuggestions");
+  if (!btn || !output) return;
+
+  const name    = document.getElementById("rv-name")?.value || "";
+  const role    = document.getElementById("rv-role")?.value || "";
+  const skills  = document.getElementById("rv-skills")?.value || "";
+  const edu     = document.getElementById("rv-edu")?.value || "";
+  const projects= document.getElementById("rv-projects")?.value || "";
+
+  btn.textContent = "⏳ Analyzing...";
+  btn.disabled = true;
+
+  try {
+    const res = await fetch("https://skillrise-api.onrender.com/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: `Review this student resume and give improvement suggestions:
+Name: ${name}
+Role: ${role}
+Skills: ${skills}
+Education: ${edu}
+Projects: ${projects}
+
+Give specific tips to make it more professional and job-ready.`
+      }),
+    });
+    const data = await res.json();
+    output.style.display = "block";
+    output.textContent = data.reply;
+  } catch (err) {
+    output.style.display = "block";
+    output.textContent = "❌ Could not analyze resume. Please try again.";
+  }
+
+  btn.textContent = "🤖 AI Improve Resume";
+  btn.disabled = false;
+}
+
+
 function updateResume() {
   document.getElementById("p-name").textContent =
     document.getElementById("rv-name").value;
