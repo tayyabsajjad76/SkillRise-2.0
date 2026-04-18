@@ -18,6 +18,11 @@ REST API Task Manager — Node.js + MongoDB + JWT
 Portfolio Website — HTML/CSS/JS with animations</textarea>
       </div>
       <button class="btn btn-primary" id="resumePreviewBtn"><i class="fa-solid fa-rotate"></i>Update Preview</button>
+      <button class="btn btn-accent" id="aiResumeBtn" onclick="generateAIResume()" style="margin-top:10px;width:100%;">
+  🤖 AI Improve Resume
+</button>
+<div id="aiResumeSuggestions" style="display:none; margin-top:16px; background:rgba(255,255,255,0.05); border:1px solid #a78bfa; border-radius:10px; padding:16px; color:#e2e8f0; white-space:pre-wrap; font-size:0.9rem;">
+</div>
     </div>
     <div class="full-card">
       <div class="card-title-row"><h3>Live CV Preview</h3><button class="btn btn-outline btn-sm"><i class="fa-solid fa-download"></i>Download PDF</button></div>
