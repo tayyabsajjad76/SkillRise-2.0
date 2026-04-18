@@ -446,17 +446,33 @@ async function sendMsg() {
   }
 }
 
-document.getElementById("chatSendBtn").addEventListener("click", sendMsg);
+// document.getElementById("chatSendBtn").addEventListener("click", sendMsg);
 
-document.getElementById("chatInput").addEventListener("keydown", (e) => {
-  if (e.key === "Enter") sendMsg();
+// document.getElementById("chatInput").addEventListener("keydown", (e) => {
+//   if (e.key === "Enter") sendMsg();
+// });
+
+// document.querySelectorAll(".quick-btn[data-prompt]").forEach((btn) => {
+//   btn.addEventListener("click", () => {
+//     document.getElementById("chatInput").value = btn.dataset.prompt;
+//     sendMsg();
+//   });
+// });
+
+document.addEventListener("click", (e) => {
+  if (e.target.id === "chatSendBtn") sendMsg();
 });
 
-document.querySelectorAll(".quick-btn[data-prompt]").forEach((btn) => {
-  btn.addEventListener("click", () => {
+document.addEventListener("keydown", (e) => {
+  if (e.target.id === "chatInput" && e.key === "Enter") sendMsg();
+});
+
+document.addEventListener("click", (e) => {
+  const btn = e.target.closest(".quick-btn[data-prompt]");
+  if (btn) {
     document.getElementById("chatInput").value = btn.dataset.prompt;
     sendMsg();
-  });
+  }
 });
 
 // ── AI ROADMAP ──
