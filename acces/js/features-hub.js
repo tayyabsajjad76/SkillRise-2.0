@@ -269,49 +269,6 @@ function buildChart() {
   });
 }
 
-// const replies = [
-//   "Great question! Let me help you 💡",
-//   "You're making amazing progress, Tayyab! 🔥",
-//   "I've added a practice exercise to your planner for this!",
-//   "Based on your goals, focus on this topic for 30 min today 🎯",
-//   "That's a common challenge. Break it into smaller steps first.",
-//   "Check your Resource Assistant — I found 3 great resources on this!",
-//   "You've got this! 14-day streak shows real commitment 💪",
-//   "Tip: consistent 30-min sessions beat long cramming every time!",
-// ];
-// let ri = 0;
-
-// function addMsg(text, who) {
-//   const area = document.getElementById("chatArea");
-//   const d = document.createElement("div");
-//   d.className = "msg " + who;
-//   d.textContent = text;
-//   area.appendChild(d);
-//   area.scrollTop = area.scrollHeight;
-// }
-
-// function sendMsg() {
-//   const inp = document.getElementById("chatInput");
-//   if (!inp.value.trim()) return;
-//   addMsg(inp.value, "user");
-//   inp.value = "";
-//   setTimeout(() => addMsg(replies[ri++ % replies.length], "ai"), 700);
-// }
-
-// document.getElementById("chatSendBtn").addEventListener("click", sendMsg);
-
-// document.getElementById("chatInput").addEventListener("keydown", (e) => {
-//   if (e.key === "Enter") sendMsg();
-// });
-
-// document.querySelectorAll(".quick-btn[data-prompt]").forEach((btn) => {
-//   btn.addEventListener("click", () => {
-//     addMsg(btn.dataset.prompt, "user");
-//     setTimeout(() => addMsg(replies[ri++ % replies.length], "ai"), 700);
-//   });
-// });
-
-
 // ── CHAT ──
 function addMsg(text, who) {
   const area = document.getElementById("chatArea");
@@ -329,7 +286,6 @@ async function sendMsg() {
   addMsg(userMsg, "user");
   inp.value = "";
 
-  // Show typing indicator
   addMsg("⏳ Thinking...", "ai");
 
   try {
@@ -340,7 +296,6 @@ async function sendMsg() {
     });
     const data = await res.json();
 
-    // Remove typing indicator
     const area = document.getElementById("chatArea");
     const msgs = area.querySelectorAll(".msg.ai");
     msgs[msgs.length - 1].remove();
@@ -366,6 +321,35 @@ document.querySelectorAll(".quick-btn[data-prompt]").forEach((btn) => {
     sendMsg();
   });
 });
+
+// ── AI ROADMAP ──
+async function generateRoadmap() {
+  const btn = document.getElementById("generateRoadmapBtn");
+  const output = document.getElementById("aiRoadmapOutput");
+  if (!btn || !output) return;
+
+  btn.textContent = "⏳ Generating...";
+  btn.disabled = true;
+
+  try {
+    const res = await fetch("https://skillrise-api.onrender.com/api/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: "Generate a detailed learning roadmap for a Full Stack Developer student. Include milestones, topics, and estimated time for each. Format it clearly with steps."
+      }),
+    });
+    const data = await res.json();
+    output.style.display = "block";
+    output.textContent = data.reply;
+  } catch (err) {
+    output.style.display = "block";
+    output.textContent = "❌ Could not generate roadmap. Please try again.";
+  }
+
+  btn.textContent = "🤖 Generate AI Roadmap";
+  btn.disabled = false;
+}
 
 
 
