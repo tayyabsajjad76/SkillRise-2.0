@@ -130,7 +130,7 @@ const server = http.createServer(async (req, res) => {
       return sendJSON(res, 200, { reply });
     }
     sendJSON(res, 404, { message: 'Route not found' });
-  } } catch (err) {
+  }   catch (err) {
     console.error(err);
     sendJSON(res, 500, { message: err.message });
   }
