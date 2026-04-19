@@ -159,7 +159,11 @@ const questions = [
 
 let qIndex = 0, score = 0, answered = false;
 
-function initQuiz() { qIndex = 0; score = 0; answered = false; renderQ(); }
+function initQuiz() {
+  qIndex = 0; score = 0; answered = false;
+  if (document.getElementById("quizQuestion")) renderQ();
+  else setTimeout(initQuiz, 300);
+}
 
 function renderQ() {
   answered = false;
