@@ -30,28 +30,28 @@ async function loadDashboard() {
 
 function initDashboard() {
   try {
-    var user = JSON.parse(localStorage.getItem("sr_current_user") || "null");
-    if (!user) { window.location.href = "index.html"; return; }
+    const user = JSON.parse(localStorage.getItem("sr_current_user") || "null");
+    if (!user) { console.log("No user found"); return; }
 
-    var sbAvatar   = document.getElementById("sbAvatar");
-    var sbUserName = document.getElementById("sbUserName");
+    const sbAvatar   = document.getElementById("sbAvatar");
+    const sbUserName = document.getElementById("sbUserName");
     if (sbAvatar)   sbAvatar.textContent   = user.initials || user.name.charAt(0).toUpperCase();
     if (sbUserName) sbUserName.textContent = user.name;
 
-    var topbarUserName = document.getElementById("topbarUserName");
+    const topbarUserName = document.getElementById("topbarUserName");
     if (topbarUserName) topbarUserName.textContent = user.name.split(" ")[0];
 
-    var heroUserName = document.getElementById("heroUserName");
+   const heroUserName = document.getElementById("heroUserName");
     if (heroUserName) heroUserName.textContent = user.name.split(" ")[0];
 
-    var chatArea = document.getElementById("chatArea");
+    const chatArea = document.getElementById("chatArea");
     if (chatArea) {
-      var firstMsg = chatArea.querySelector(".msg.ai");
+      const firstMsg = chatArea.querySelector(".msg.ai");
       if (firstMsg)
         firstMsg.textContent = "👋 Hey " + user.name.split(" ")[0] + "! You're on a 14-day streak — incredible! What would you like to work on today?";
     }
 
-    var youRow = document.querySelector(".leaderboard-row--you");
+    const youRow = document.querySelector(".leaderboard-row--you");
     if (youRow) {
       youRow.querySelector("span:first-child").innerHTML = "⭐ <strong>You (" + user.name.split(" ")[0] + ")</strong>";
     }
@@ -68,8 +68,8 @@ const logoutBtn = document.getElementById("logoutBtn");
     
 
     // ── WIRE CHAT BUTTONS AFTER SECTIONS LOAD ──
-    var sendBtn = document.getElementById("chatSendBtn");
-    var chatInp = document.getElementById("chatInput");
+    const sendBtn = document.getElementById("chatSendBtn");
+    const chatInp = document.getElementById("chatInput");
     if (sendBtn) sendBtn.addEventListener("click", sendMsg);
     if (chatInp) chatInp.addEventListener("keydown", function(e) {
       if (e.key === "Enter") sendMsg();
