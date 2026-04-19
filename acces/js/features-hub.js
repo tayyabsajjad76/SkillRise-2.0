@@ -82,7 +82,7 @@ const logoutBtn = document.getElementById("logoutBtn");
     });
 
   } catch (e) {
-    window.location.href = "index.html";
+    console.error("Dashboard error:", e);
   }
 }
 
