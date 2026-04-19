@@ -27,11 +27,10 @@ async function loadDashboard() {
   }
   initDashboard();
 }
-
 function initDashboard() {
   try {
     const user = JSON.parse(localStorage.getItem("sr_current_user") || "null");
-    if (!user) { console.log("No user found"); return; }
+    if (!user) { window.location.href = "index.html"; return; }
 
     const sbAvatar   = document.getElementById("sbAvatar");
     const sbUserName = document.getElementById("sbUserName");
@@ -41,7 +40,7 @@ function initDashboard() {
     const topbarUserName = document.getElementById("topbarUserName");
     if (topbarUserName) topbarUserName.textContent = user.name.split(" ")[0];
 
-   const heroUserName = document.getElementById("heroUserName");
+    const heroUserName = document.getElementById("heroUserName");
     if (heroUserName) heroUserName.textContent = user.name.split(" ")[0];
 
     const chatArea = document.getElementById("chatArea");
@@ -56,7 +55,7 @@ function initDashboard() {
       youRow.querySelector("span:first-child").innerHTML = "⭐ <strong>You (" + user.name.split(" ")[0] + ")</strong>";
     }
 
-const logoutBtn = document.getElementById("logoutBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
       logoutBtn.addEventListener("click", () => {
         if (confirm("Logout from Dashboard?")) { window.location.href = "index.html"; }
@@ -65,26 +64,83 @@ const logoutBtn = document.getElementById("logoutBtn");
 
     // ── INIT QUIZ ──
     initQuiz();
-    
 
     // ── WIRE CHAT BUTTONS AFTER SECTIONS LOAD ──
     const sendBtn = document.getElementById("chatSendBtn");
     const chatInp = document.getElementById("chatInput");
     if (sendBtn) sendBtn.addEventListener("click", sendMsg);
-    if (chatInp) chatInp.addEventListener("keydown", function(e) {
+    if (chatInp) chatInp.addEventListener("keydown", (e) => {
       if (e.key === "Enter") sendMsg();
     });
-    document.querySelectorAll(".quick-btn[data-prompt]").forEach(function(btn) {
-      btn.addEventListener("click", function() {
+    document.querySelectorAll(".quick-btn[data-prompt]").forEach((btn) => {
+      btn.addEventListener("click", () => {
         document.getElementById("chatInput").value = btn.dataset.prompt;
         sendMsg();
       });
     });
 
   } catch (e) {
-    console.error("Dashboard error:", e);
+    window.location.href = "index.html";
   }
 }
+
+// function initDashboard() {
+//   try {
+//     const user = JSON.parse(localStorage.getItem("sr_current_user") || "null");
+//     if (!user) { console.log("No user found"); return; }
+
+//     const sbAvatar   = document.getElementById("sbAvatar");
+//     const sbUserName = document.getElementById("sbUserName");
+//     if (sbAvatar)   sbAvatar.textContent   = user.initials || user.name.charAt(0).toUpperCase();
+//     if (sbUserName) sbUserName.textContent = user.name;
+
+//     const topbarUserName = document.getElementById("topbarUserName");
+//     if (topbarUserName) topbarUserName.textContent = user.name.split(" ")[0];
+
+//    const heroUserName = document.getElementById("heroUserName");
+//     if (heroUserName) heroUserName.textContent = user.name.split(" ")[0];
+
+//     const chatArea = document.getElementById("chatArea");
+//     if (chatArea) {
+//       const firstMsg = chatArea.querySelector(".msg.ai");
+//       if (firstMsg)
+//         firstMsg.textContent = "👋 Hey " + user.name.split(" ")[0] + "! You're on a 14-day streak — incredible! What would you like to work on today?";
+//     }
+
+//     const youRow = document.querySelector(".leaderboard-row--you");
+//     if (youRow) {
+//       youRow.querySelector("span:first-child").innerHTML = "⭐ <strong>You (" + user.name.split(" ")[0] + ")</strong>";
+//     }
+
+// const logoutBtn = document.getElementById("logoutBtn");
+//     if (logoutBtn) {
+//       logoutBtn.addEventListener("click", () => {
+//         if (confirm("Logout from Dashboard?")) { window.location.href = "index.html"; }
+//       });
+//     }
+
+//     // ── INIT QUIZ ──
+//     // initQuiz();
+    
+
+//     // ── WIRE CHAT BUTTONS AFTER SECTIONS LOAD ──
+//     const sendBtn = document.getElementById("chatSendBtn");
+//     const chatInp = document.getElementById("chatInput");
+//     if (sendBtn) sendBtn.addEventListener("click", sendMsg);
+//     if (chatInp) chatInp.addEventListener("keydown", function(e) {
+//       if (e.key === "Enter") sendMsg();
+//     });
+//     document.querySelectorAll(".quick-btn[data-prompt]").forEach(function(btn) {
+//       btn.addEventListener("click", function() {
+//         document.getElementById("chatInput").value = btn.dataset.prompt;
+//         sendMsg();
+//       });
+//     });
+
+//   } catch (e) {
+//     console.error("Dashboard error:", e);
+//   }
+// }
 
 loadDashboard();
 
@@ -163,11 +219,12 @@ const questions = [
 
 let qIndex = 0, score = 0, answered = false;
 
-function initQuiz() {
-  qIndex = 0; score = 0; answered = false;
-  if (document.getElementById("quizQuestion")) renderQ();
-  else setTimeout(initQuiz, 300);
-}
+// function initQuiz() {
+//   qIndex = 0; score = 0; answered = false;
+//   if (document.getElementById("quizQuestion")) renderQ();
+//   else setTimeout(initQuiz, 300);
+// }
+function initQuiz() { qIndex = 0; score = 0; answered = false; renderQ(); }
 
 function renderQ() {
   answered = false;
