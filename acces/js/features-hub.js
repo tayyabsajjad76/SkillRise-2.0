@@ -56,12 +56,16 @@ function initDashboard() {
       youRow.querySelector("span:first-child").innerHTML = "⭐ <strong>You (" + user.name.split(" ")[0] + ")</strong>";
     }
 
-    var logoutBtn = document.getElementById("logoutBtn");
+const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
-      logoutBtn.addEventListener("click", function () {
+      logoutBtn.addEventListener("click", () => {
         if (confirm("Logout from Dashboard?")) { window.location.href = "index.html"; }
       });
     }
+
+    // ── INIT QUIZ ──
+    initQuiz();
+    
 
     // ── WIRE CHAT BUTTONS AFTER SECTIONS LOAD ──
     var sendBtn = document.getElementById("chatSendBtn");
