@@ -2,21 +2,31 @@
 <div class="section-page" id="page-interview">
   <div class="sec-label">AI Mock Interview</div>
   <div class="sec-title">Practice Interview Sessions</div>
-  <div class="sec-desc">AI voice/text interviewer with real-time feedback. Session 6 of 8 — Technical Round.</div>
+  <div class="sec-desc">AI interviewer asks you real questions and gives instant feedback.</div>
   <div class="row2">
     <div class="full-card">
       <div class="interview-header"><div class="ai-avatar">🤖</div><h3>SR-AI Interviewer</h3><p>Technical Round · Full Stack Developer</p></div>
-      <div class="int-question">💬 <strong>Q:</strong> "Explain the difference between synchronous and asynchronous programming in JavaScript. Give a real-world example of when you'd use each."</div>
-      <textarea class="form-textarea" rows="4" placeholder="Type your answer here..."></textarea>
-      <div class="int-btns">
-        <button class="btn btn-primary btn-sm"><i class="fa-solid fa-microphone"></i>Voice Answer</button>
-        <button class="btn btn-accent btn-sm"><i class="fa-solid fa-paper-plane"></i>Submit Answer</button>
-        <button class="btn btn-outline btn-sm"><i class="fa-solid fa-forward"></i>Skip</button>
+
+      <!-- Topic selector -->
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+        <input id="interviewTopic" type="text" placeholder="e.g. React, Node.js, System Design..."
+          style="flex:1;min-width:160px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:50px;padding:8px 16px;color:#f0f4ff;font-size:0.85rem;outline:none;" />
+        <button class="btn btn-primary btn-sm" onclick="getNewInterviewQuestion()">🤖 New Question</button>
       </div>
-      <div class="feedback-row">
-        <div class="fb-item"><div class="fb-score fb-score--accent">8/10</div><div class="fb-lbl">Communication</div></div>
-        <div class="fb-item"><div class="fb-score fb-score--blue">7/10</div><div class="fb-lbl">Technical</div></div>
-        <div class="fb-item"><div class="fb-score fb-score--warn">9/10</div><div class="fb-lbl">Confidence</div></div>
+
+      <div class="int-question" id="interviewQuestion">
+        💬 <strong>Q:</strong> Click "New Question" to get an AI-generated interview question!
+      </div>
+      <textarea class="form-textarea" id="interviewAnswer" rows="4" placeholder="Type your answer here..."></textarea>
+      <div class="int-btns">
+        <button class="btn btn-accent btn-sm" id="submitInterviewBtn" onclick="submitInterviewAnswer()"><i class="fa-solid fa-paper-plane"></i>Submit Answer</button>
+        <button class="btn btn-outline btn-sm" onclick="getNewInterviewQuestion()"><i class="fa-solid fa-forward"></i>Skip</button>
+      </div>
+      <div id="interviewFeedback" style="display:none;margin-top:14px;padding:16px;background:rgba(26,86,255,0.08);border:1px solid rgba(26,86,255,0.2);border-radius:12px;font-size:0.84rem;line-height:1.7;color:#f0f4ff;white-space:pre-wrap;"></div>
+      <div class="feedback-row" style="margin-top:14px;">
+        <div class="fb-item"><div class="fb-score fb-score--accent" id="scoreComm">-</div><div class="fb-lbl">Communication</div></div>
+        <div class="fb-item"><div class="fb-score fb-score--blue" id="scoreTech">-</div><div class="fb-lbl">Technical</div></div>
+        <div class="fb-item"><div class="fb-score fb-score--warn" id="scoreConf">-</div><div class="fb-lbl">Confidence</div></div>
       </div>
     </div>
     <div class="col-flex">
@@ -29,9 +39,9 @@
           <div class="session-stat-row"><span>Confidence Trend</span><span class="val-accent">↑ Improving</span></div>
         </div>
       </div>
-      <div class="full-card ai-feedback">
+      <div class="full-card ai-feedback" id="aiFeedbackCard">
         <div class="card-title-row"><h3>AI Feedback</h3></div>
-        <p>✅ <strong>Strength:</strong> Clear explanations and good examples.<br><br>⚠️ <strong>Improve:</strong> Mention error handling in async code.<br><br>💡 <strong>Tip:</strong> Start with a direct definition, then give an example.</p>
+        <p id="aiFeedbackText">Submit an answer to get AI feedback on your response.</p>
       </div>
     </div>
   </div>
