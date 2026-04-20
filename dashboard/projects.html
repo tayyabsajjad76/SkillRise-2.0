@@ -11,13 +11,36 @@
     <p class="current-project-desc">Create a full CRUD REST API for a task manager. Include JWT authentication and MongoDB integration.</p>
     <div class="prog-wrap"><div class="prog-row"><span>Progress</span><span>40%</span></div><div class="prog-track"><div class="prog-fill prog-fill--warn" data-w="40"></div></div></div>
     <div class="current-project-btns">
-      <button class="btn btn-primary btn-sm"><i class="fa-solid fa-code"></i>View Requirements</button>
-      <button class="btn btn-outline btn-sm"><i class="fa-solid fa-lightbulb"></i>Get Hint</button>
-      <button class="btn btn-accent btn-sm"><i class="fa-brands fa-github"></i>Submit Repo</button>
+      <button class="btn btn-primary btn-sm" onclick="showProjectRequirements()"><i class="fa-solid fa-code"></i>View Requirements</button>
+      <button class="btn btn-outline btn-sm" onclick="getProjectHint()"><i class="fa-solid fa-lightbulb"></i>Get Hint</button>
+      <button class="btn btn-accent btn-sm" onclick="window.open('https://github.com/new', '_blank')"><i class="fa-brands fa-github"></i>Submit Repo</button>
+    </div>
+    <div id="projectRequirements" style="display:none;margin-top:14px;padding:16px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;font-size:0.84rem;line-height:1.7;color:#f0f4ff;">
+      <strong>📋 Project Requirements:</strong><br><br>
+      1. Create a Node.js + Express server<br>
+      2. Build CRUD endpoints: GET, POST, PUT, DELETE /tasks<br>
+      3. Add JWT authentication (register/login)<br>
+      4. Connect to MongoDB with Mongoose<br>
+      5. Add input validation and error handling<br>
+      6. Deploy to Render.com<br><br>
+      <strong>📁 Submit your GitHub repo link when done!</strong>
+    </div>
+    <div id="projectHint" style="display:none;margin-top:14px;padding:16px;background:rgba(0,229,160,0.06);border:1px solid rgba(0,229,160,0.2);border-radius:12px;font-size:0.84rem;line-height:1.7;color:#f0f4ff;">
+      ⏳ Getting AI hint...
     </div>
   </div>
+
   <div class="card-title-row"><h3>Completed Projects</h3><span class="badge badge-green">12 Done</span></div>
-  <div class="project-card"><div class="proj-header"><div><div class="proj-title">Portfolio Website</div><div class="proj-meta"><span class="badge badge-green">Completed</span><span class="proj-meta-time">Week 3</span></div></div><div class="proj-score">92/100</div></div><div class="proj-desc">Built a responsive portfolio using HTML, CSS &amp; JavaScript with animations.</div></div>
-  <div class="project-card"><div class="proj-header"><div><div class="proj-title">React Todo App with Hooks</div><div class="proj-meta"><span class="badge badge-green">Completed</span><span class="proj-meta-time">Week 5</span></div></div><div class="proj-score">88/100</div></div><div class="proj-desc">Full todo app using useState, useEffect, and localStorage persistence.</div></div>
-  <div class="project-card"><div class="proj-header"><div><div class="proj-title">Weather App with API</div><div class="proj-meta"><span class="badge badge-green">Completed</span><span class="proj-meta-time">Week 4</span></div></div><div class="proj-score">85/100</div></div><div class="proj-desc">Fetched live weather data from OpenWeatherMap API and displayed it dynamically.</div></div>
+  <div class="project-card">
+    <div class="proj-header"><div><div class="proj-title">Portfolio Website</div><div class="proj-meta"><span class="badge badge-green">Completed</span><span class="proj-meta-time">Week 3</span></div></div><div class="proj-score">92/100</div></div>
+    <div class="proj-desc">Built a responsive portfolio using HTML, CSS &amp; JavaScript with animations.</div>
+  </div>
+  <div class="project-card">
+    <div class="proj-header"><div><div class="proj-title">React Todo App with Hooks</div><div class="proj-meta"><span class="badge badge-green">Completed</span><span class="proj-meta-time">Week 5</span></div></div><div class="proj-score">88/100</div></div>
+    <div class="proj-desc">Full todo app using useState, useEffect, and localStorage persistence.</div>
+  </div>
+  <div class="project-card">
+    <div class="proj-header"><div><div class="proj-title">Weather App with API</div><div class="proj-meta"><span class="badge badge-green">Completed</span><span class="proj-meta-time">Week 4</span></div></div><div class="proj-score">85/100</div></div>
+    <div class="proj-desc">Fetched live weather data from OpenWeatherMap API and displayed it dynamically.</div>
+  </div>
 </div>
