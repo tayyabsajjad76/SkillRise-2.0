@@ -1,5 +1,7 @@
 "use strict";
- 
+
+const API = "https://skillrise-api.onrender.com";
+
 // ── LOAD DASHBOARD SECTIONS ──
 const dashboardSections = [
   "dashboard/home.html",
@@ -15,7 +17,7 @@ const dashboardSections = [
   "dashboard/gamification.html",
   "dashboard/chat.html",
 ];
- 
+
 async function loadDashboard() {
   const content = document.getElementById("dashboardContent");
   for (const url of dashboardSections) {
@@ -27,58 +29,58 @@ async function loadDashboard() {
   }
   initDashboard();
 }
- 
+
 function initDashboard() {
   try {
     const user = JSON.parse(localStorage.getItem("sr_current_user") || "null");
     if (!user) { window.location.href = "index.html"; return; }
- 
+
     const sbAvatar   = document.getElementById("sbAvatar");
     const sbUserName = document.getElementById("sbUserName");
     if (sbAvatar)   sbAvatar.textContent   = user.initials || user.name.charAt(0).toUpperCase();
     if (sbUserName) sbUserName.textContent = user.name;
- 
+
     const topbarUserName = document.getElementById("topbarUserName");
     if (topbarUserName) topbarUserName.textContent = user.name.split(" ")[0];
- 
+
     const heroUserName = document.getElementById("heroUserName");
     if (heroUserName) heroUserName.textContent = user.name.split(" ")[0];
- 
+
     const chatArea = document.getElementById("chatArea");
     if (chatArea) {
       const firstMsg = chatArea.querySelector(".msg.ai");
       if (firstMsg)
         firstMsg.textContent = "👋 Hey " + user.name.split(" ")[0] + "! You're on a 14-day streak — incredible! What would you like to work on today?";
     }
- 
+
     const youRow = document.querySelector(".leaderboard-row--you");
     if (youRow) {
       youRow.querySelector("span:first-child").innerHTML = "⭐ <strong>You (" + user.name.split(" ")[0] + ")</strong>";
     }
- 
+
     const logoutBtn = document.getElementById("logoutBtn");
     if (logoutBtn) {
       logoutBtn.addEventListener("click", () => {
         if (confirm("Logout from Dashboard?")) { window.location.href = "index.html"; }
       });
     }
- 
-    // ── INIT QUIZ AFTER SECTIONS LOAD ──
+
+    // ── INIT QUIZ ──
     initQuiz();
- 
-    // ── WIRE NEXT BUTTON AFTER SECTIONS LOAD ──
+
+    // ── WIRE NEXT BUTTON ──
     const nextBtn = document.getElementById("nextBtn");
     if (nextBtn) nextBtn.addEventListener("click", () => {
       if (qIndex < questions.length - 1) { qIndex++; renderQ(); }
     });
- 
-    // ── WIRE RESUME BUTTONS AFTER SECTIONS LOAD ──
+
+    // ── WIRE RESUME BUTTONS ──
     const resumeUpdateBtn  = document.getElementById("resumeUpdateBtn");
     const resumePreviewBtn = document.getElementById("resumePreviewBtn");
     if (resumeUpdateBtn)  resumeUpdateBtn.addEventListener("click", updateResume);
     if (resumePreviewBtn) resumePreviewBtn.addEventListener("click", updateResume);
- 
-    // ── WIRE TASK LIST AFTER SECTIONS LOAD ──
+
+    // ── WIRE TASK LIST ──
     const taskList = document.getElementById("taskList");
     if (taskList) taskList.addEventListener("click", (e) => {
       const item = e.target.closest(".task-item");
@@ -90,8 +92,8 @@ function initDashboard() {
       const badge = document.getElementById("taskBadge");
       if (badge) badge.textContent = done + " / " + total + " Done";
     });
- 
-    // ── WIRE CHAT BUTTONS AFTER SECTIONS LOAD ──
+
+    // ── WIRE CHAT BUTTONS ──
     const sendBtn = document.getElementById("chatSendBtn");
     const chatInp = document.getElementById("chatInput");
     if (sendBtn) sendBtn.addEventListener("click", sendMsg);
@@ -104,19 +106,37 @@ function initDashboard() {
         sendMsg();
       });
     });
- 
-    // ── WIRE PROGRESS BARS AFTER SECTIONS LOAD ──
+
+    // ── WIRE PROGRESS BARS ──
     document.querySelectorAll(".prog-fill[data-w]").forEach((el) => {
       el.style.width = el.getAttribute("data-w") + "%";
     });
- 
+
+    // ── WIRE QUIZ TOPIC ENTER KEY ──
+    const quizTopicInp = document.getElementById("quizTopic");
+    if (quizTopicInp) quizTopicInp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") generateAIQuiz();
+    });
+
+    // ── WIRE ROADMAP FIELD ENTER KEY ──
+    const roadmapFieldInp = document.getElementById("roadmapField");
+    if (roadmapFieldInp) roadmapFieldInp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") generateRoadmap();
+    });
+
+    // ── WIRE INTERVIEW TOPIC ENTER KEY ──
+    const interviewTopicInp = document.getElementById("interviewTopic");
+    if (interviewTopicInp) interviewTopicInp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") getNewInterviewQuestion();
+    });
+
   } catch (e) {
     window.location.href = "index.html";
   }
 }
- 
+
 loadDashboard();
- 
+
 // ── PAGE INFO ──
 const pageInfo = {
   home:         { t: "Dashboard Home",        s: "Welcome back 👋" },
@@ -132,27 +152,27 @@ const pageInfo = {
   gamification: { t: "Badges & Levels",        s: "Your achievements & leaderboard" },
   chat:         { t: "AI Mentor Chat",         s: "Your 24/7 AI companion" },
 };
- 
+
 // ── NAVIGATION ──
 function goto(id) {
   document.querySelectorAll(".section-page").forEach((p) => p.classList.remove("active"));
   document.querySelectorAll(".nav-item").forEach((n) => n.classList.remove("active"));
- 
+
   const page = document.getElementById("page-" + id);
   if (page) page.classList.add("active");
- 
+
   const navItem = document.querySelector(`.nav-item[data-page="${id}"]`);
   if (navItem) navItem.classList.add("active");
- 
+
   const info = pageInfo[id] || { t: id, s: "" };
   document.getElementById("topbarTitle").textContent = info.t;
   document.getElementById("topbarSub").textContent   = info.s;
- 
+
   if (window.innerWidth < 768) document.getElementById("sidebar").classList.remove("open");
   if (id === "analytics" && !document.getElementById("chartBars").children.length) buildChart();
   if (id === "quiz") initQuiz();
 }
- 
+
 document.querySelectorAll(".nav-item[data-page]").forEach((item) => {
   item.addEventListener("click", () => goto(item.dataset.page));
 });
@@ -165,8 +185,8 @@ document.getElementById("menuBtn").addEventListener("click", () => {
 document.getElementById("backBtn").addEventListener("click", () => {
   window.location.href = "index.html";
 });
- 
-// ── QUIZ ──
+
+// ── QUIZ (default static questions) ──
 const questions = [
   { q: "What does the `async` keyword do to a function?", opts: ["Makes it run faster", "Returns a Promise automatically", "Blocks other code", "Makes it synchronous"], ans: 1, exp: "The `async` keyword wraps the function's return value in a Promise automatically." },
   { q: "What does `await` do inside an async function?", opts: ["Delays code by 1 second", "Catches errors", "Pauses until the Promise resolves", "Runs code in background"], ans: 2, exp: "`await` pauses the async function until the awaited Promise resolves or rejects." },
@@ -174,16 +194,20 @@ const questions = [
   { q: "What does `Promise.all()` do?", opts: ["Runs promises one by one", "Cancels all promises", "Waits for ALL promises to resolve", "Returns first resolved promise"], ans: 2, exp: "Promise.all() resolves when ALL promises in the array resolve." },
   { q: "What happens if you `await` a non-Promise value?", opts: ["Throws an error", "The value is returned as-is", "Converts to undefined", "Code stops"], ans: 1, exp: "Awaiting a non-Promise simply returns the value — treated as already resolved." },
 ];
- 
+
+let aiQuestions = null;
 let qIndex = 0, score = 0, answered = false;
- 
-function initQuiz() { qIndex = 0; score = 0; answered = false; renderQ(); }
- 
+
+function initQuiz() { qIndex = 0; score = 0; answered = false; aiQuestions = null; renderQ(); }
+
+function getCurrentQuestions() { return aiQuestions || questions; }
+
 function renderQ() {
+  const q = getCurrentQuestions();
+  if (!q || !q[qIndex]) return;
   answered = false;
-  const q = questions[qIndex];
   document.getElementById("qNum").textContent = qIndex + 1;
-  document.getElementById("quizQuestion").textContent = q.q;
+  document.getElementById("quizQuestion").textContent = q[qIndex].q;
   const fb = document.getElementById("quizFeedback");
   fb.style.display = "none"; fb.removeAttribute("style");
   document.getElementById("nextBtn").style.display = "none";
@@ -192,37 +216,78 @@ function renderQ() {
   ["A", "B", "C", "D"].forEach((label, i) => {
     const d = document.createElement("div");
     d.className = "quiz-option";
-    d.textContent = label + ". " + q.opts[i];
+    d.textContent = label + ". " + q[qIndex].opts[i];
     d.addEventListener("click", () => pick(i, d));
     opts.appendChild(d);
   });
   updScore();
 }
- 
+
 function pick(i, el) {
   if (answered) return;
   answered = true;
-  const q = questions[qIndex];
+  const q = getCurrentQuestions();
   document.querySelectorAll(".quiz-option").forEach((o, j) => {
-    if (j === q.ans) o.classList.add("correct");
-    else if (j === i && i !== q.ans) o.classList.add("wrong");
+    if (j === q[qIndex].ans) o.classList.add("correct");
+    else if (j === i && i !== q[qIndex].ans) o.classList.add("wrong");
   });
-  if (i === q.ans) score++;
+  if (i === q[qIndex].ans) score++;
   const fb = document.getElementById("quizFeedback");
-  const ok = i === q.ans;
+  const ok = i === q[qIndex].ans;
   fb.style.cssText = `display:block;margin-top:14px;padding:12px 16px;border-radius:12px;font-size:.84rem;line-height:1.6;background:${ok ? "rgba(0,229,160,.08)" : "rgba(255,77,109,.08)"};border:1px solid ${ok ? "rgba(0,229,160,.2)" : "rgba(255,77,109,.2)"};color:${ok ? "var(--accent)" : "var(--danger)"};`;
-  fb.textContent = (ok ? "✅ Correct! " : "❌ Wrong. ") + q.exp;
-  if (qIndex < questions.length - 1) document.getElementById("nextBtn").style.display = "flex";
+  fb.textContent = (ok ? "✅ Correct! " : "❌ Wrong. ") + q[qIndex].exp;
+  if (qIndex < q.length - 1) document.getElementById("nextBtn").style.display = "flex";
   updScore();
 }
- 
+
 function updScore() {
-  document.getElementById("quizScore").textContent = "Score: " + score + " / " + questions.length;
-  const pct = Math.round((score / questions.length) * 100);
+  const total = getCurrentQuestions().length;
+  document.getElementById("quizScore").textContent = "Score: " + score + " / " + total;
+  const pct = Math.round((score / total) * 100);
   document.getElementById("quizPct").textContent = pct + "%";
   document.getElementById("quizBar").style.width  = pct + "%";
 }
- 
+
+// ── AI QUIZ GENERATOR ──
+async function generateAIQuiz() {
+  const topicEl = document.getElementById("quizTopic");
+  const topic   = topicEl?.value.trim() || "JavaScript";
+  const btn     = document.getElementById("generateQuizBtn");
+  const badge   = document.getElementById("quizTopicBadge");
+
+  if (btn) { btn.textContent = "⏳ Generating..."; btn.disabled = true; }
+
+  try {
+    const res  = await fetch(`${API}/api/chat`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: `Generate exactly 5 multiple choice quiz questions about "${topic}". 
+Return ONLY valid JSON array, no extra text, no markdown, no backticks. Format:
+[{"q":"question text","opts":["A","B","C","D"],"ans":0,"exp":"explanation"}]
+ans is the index (0-3) of correct answer.` }),
+    });
+    const data = await res.json();
+    let parsed;
+    try {
+      const clean = data.reply.replace(/```json|```/g, "").trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      const match = data.reply.match(/\[[\s\S]*\]/);
+      if (match) parsed = JSON.parse(match[0]);
+    }
+    if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+      aiQuestions = parsed;
+      qIndex = 0; score = 0; answered = false;
+      if (badge) badge.textContent = topic;
+      renderQ();
+    } else {
+      alert("Could not parse quiz. Try again!");
+    }
+  } catch (err) {
+    alert("❌ Could not generate quiz. Please try again.");
+  }
+  if (btn) { btn.textContent = "🤖 Generate New Quiz"; btn.disabled = false; }
+}
+
 // ── AI RESUME HELPER ──
 async function generateAIResume() {
   const btn    = document.getElementById("aiResumeBtn");
@@ -235,7 +300,7 @@ async function generateAIResume() {
   const projects = document.getElementById("rv-projects")?.value || "";
   btn.textContent = "⏳ Analyzing..."; btn.disabled = true;
   try {
-    const res  = await fetch("https://skillrise-api.onrender.com/api/chat", {
+    const res  = await fetch(`${API}/api/chat`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: `Review this student resume and give improvement suggestions:\nName: ${name}\nRole: ${role}\nSkills: ${skills}\nEducation: ${edu}\nProjects: ${projects}\n\nGive specific tips to make it more professional and job-ready.` }),
     });
@@ -246,7 +311,7 @@ async function generateAIResume() {
   }
   btn.textContent = "🤖 AI Improve Resume"; btn.disabled = false;
 }
- 
+
 // ── RESUME ──
 function updateResume() {
   document.getElementById("p-name").textContent    = document.getElementById("rv-name").value;
@@ -260,7 +325,7 @@ function updateResume() {
     return `<div class="rv-item">• <strong>${pts[0].trim()}</strong>${pts[1] ? " — " + pts[1].trim() : ""}</div>`;
   }).join("");
 }
- 
+
 // ── CHART ──
 function buildChart() {
   const scores = [62, 71, 68, 75, 82, 78];
@@ -275,7 +340,7 @@ function buildChart() {
     bars.appendChild(w);
   });
 }
- 
+
 // ── CHAT ──
 function addMsg(text, who) {
   const area = document.getElementById("chatArea");
@@ -285,7 +350,7 @@ function addMsg(text, who) {
   area.appendChild(d);
   area.scrollTop = area.scrollHeight;
 }
- 
+
 async function sendMsg() {
   const inp = document.getElementById("chatInput");
   if (!inp || !inp.value.trim()) return;
@@ -294,7 +359,7 @@ async function sendMsg() {
   inp.value = "";
   addMsg("⏳ Thinking...", "ai");
   try {
-    const res  = await fetch("https://skillrise-api.onrender.com/api/chat", {
+    const res  = await fetch(`${API}/api/chat`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: userMsg }),
     });
@@ -310,17 +375,22 @@ async function sendMsg() {
     addMsg("❌ Could not reach AI. Please try again.", "ai");
   }
 }
- 
-// ── AI ROADMAP ──
+
+// ── AI ROADMAP (any field) ──
 async function generateRoadmap() {
   const btn    = document.getElementById("generateRoadmapBtn");
   const output = document.getElementById("aiRoadmapOutput");
+  const fieldEl= document.getElementById("roadmapField");
   if (!btn || !output) return;
+
+  const field = fieldEl?.value.trim() || "Full Stack Web Development";
+  if (!field) { alert("Please enter a field first!"); return; }
+
   btn.textContent = "⏳ Generating..."; btn.disabled = true;
   try {
-    const res  = await fetch("https://skillrise-api.onrender.com/api/chat", {
+    const res  = await fetch(`${API}/api/chat`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: "Generate a detailed learning roadmap for a Full Stack Developer student. Include milestones, topics, and estimated time for each. Format it clearly with steps." }),
+      body: JSON.stringify({ message: `Generate a detailed learning roadmap for a student who wants to become a ${field} professional. Include milestones, topics to learn, resources, and estimated time for each step. Format it clearly with numbered steps.` }),
     });
     const data = await res.json();
     output.style.display = "block"; output.textContent = data.reply;
@@ -330,4 +400,101 @@ async function generateRoadmap() {
   btn.textContent = "🤖 Generate AI Roadmap"; btn.disabled = false;
 }
 
+// ── AI INTERVIEW ──
+async function getNewInterviewQuestion() {
+  const topicEl = document.getElementById("interviewTopic");
+  const topic   = topicEl?.value.trim() || "Full Stack Development";
+  const qEl     = document.getElementById("interviewQuestion");
+  const fb      = document.getElementById("interviewFeedback");
+  const ansEl   = document.getElementById("interviewAnswer");
 
+  if (qEl) qEl.innerHTML = "💬 <strong>Q:</strong> ⏳ Getting question...";
+  if (fb)  { fb.style.display = "none"; fb.textContent = ""; }
+  if (ansEl) ansEl.value = "";
+
+  // Reset scores
+  ["scoreComm", "scoreTech", "scoreConf"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = "-";
+  });
+
+  try {
+    const res  = await fetch(`${API}/api/chat`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: `Generate ONE technical interview question about "${topic}". Return ONLY the question, nothing else. No numbering, no explanation.` }),
+    });
+    const data = await res.json();
+    if (qEl) qEl.innerHTML = `💬 <strong>Q:</strong> ${data.reply}`;
+  } catch (err) {
+    if (qEl) qEl.innerHTML = "💬 <strong>Q:</strong> ❌ Could not get question. Try again.";
+  }
+}
+
+async function submitInterviewAnswer() {
+  const qEl    = document.getElementById("interviewQuestion");
+  const ansEl  = document.getElementById("interviewAnswer");
+  const fb     = document.getElementById("interviewFeedback");
+  const fbtxt  = document.getElementById("aiFeedbackText");
+  const btn    = document.getElementById("submitInterviewBtn");
+
+  if (!ansEl?.value.trim()) { alert("Please type your answer first!"); return; }
+  if (btn) { btn.textContent = "⏳ Analyzing..."; btn.disabled = true; }
+
+  const question = qEl?.textContent || "";
+  const answer   = ansEl.value;
+
+  try {
+    const res  = await fetch(`${API}/api/chat`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: `You are a technical interviewer. The question was: "${question}"\n\nThe candidate answered: "${answer}"\n\nProvide feedback in this exact format:\nCOMMUNICATION: X/10\nTECHNICAL: X/10\nCONFIDENCE: X/10\nFEEDBACK: [detailed feedback with strengths and improvements]` }),
+    });
+    const data = await res.json();
+    const reply = data.reply;
+
+    // Parse scores
+    const commMatch = reply.match(/COMMUNICATION:\s*(\d+)/i);
+    const techMatch = reply.match(/TECHNICAL:\s*(\d+)/i);
+    const confMatch = reply.match(/CONFIDENCE:\s*(\d+)/i);
+    const feedMatch = reply.match(/FEEDBACK:\s*([\s\S]+)/i);
+
+    if (commMatch) document.getElementById("scoreComm").textContent = commMatch[1] + "/10";
+    if (techMatch) document.getElementById("scoreTech").textContent = techMatch[1] + "/10";
+    if (confMatch) document.getElementById("scoreConf").textContent = confMatch[1] + "/10";
+
+    if (fb) { fb.style.display = "block"; fb.textContent = feedMatch ? feedMatch[1].trim() : reply; }
+    if (fbtxt) fbtxt.textContent = feedMatch ? feedMatch[1].trim() : reply;
+
+  } catch (err) {
+    if (fb) { fb.style.display = "block"; fb.textContent = "❌ Could not get feedback. Please try again."; }
+  }
+  if (btn) { btn.textContent = "Submit Answer"; btn.disabled = false; }
+}
+
+// ── PROJECT FUNCTIONS ──
+function showProjectRequirements() {
+  const req = document.getElementById("projectRequirements");
+  const hint = document.getElementById("projectHint");
+  if (req) {
+    req.style.display = req.style.display === "none" ? "block" : "none";
+    if (hint) hint.style.display = "none";
+  }
+}
+
+async function getProjectHint() {
+  const hint = document.getElementById("projectHint");
+  const req  = document.getElementById("projectRequirements");
+  if (!hint) return;
+  hint.style.display = "block";
+  hint.textContent   = "⏳ Getting AI hint...";
+  if (req) req.style.display = "none";
+  try {
+    const res  = await fetch(`${API}/api/chat`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: "Give me a helpful hint for building a REST API with Node.js and Express with JWT authentication and MongoDB. Keep it concise and practical." }),
+    });
+    const data = await res.json();
+    hint.textContent = "💡 " + data.reply;
+  } catch (err) {
+    hint.textContent = "❌ Could not get hint. Please try again.";
+  }
+}
