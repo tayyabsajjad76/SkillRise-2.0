@@ -5,8 +5,8 @@
     <h2>Welcome back, <span id="heroUserName">there</span>! 👋</h2>
     <p>3 tasks pending today. Interview readiness jumped 5% this week!</p>
     <div class="home-hero-btns">
-      <button class="btn btn-accent" data-goto="planner"><i class="fa-solid fa-calendar-check"></i>Today's Tasks</button>
-      <button class="btn btn-outline" data-goto="interview"><i class="fa-solid fa-microphone"></i>Mock Interview</button>
+      <button class="btn btn-accent" onclick="goto('planner')"><i class="fa-solid fa-calendar-check"></i>Today's Tasks</button>
+      <button class="btn btn-outline" onclick="goto('interview')"><i class="fa-solid fa-microphone"></i>Mock Interview</button>
     </div>
   </div>
   <div class="stats-grid">
@@ -16,8 +16,8 @@
     <div class="stat-card"><div class="s-lbl">Projects Done</div><div class="s-val s-val--purple">12</div><div class="s-sub">Next due in 3 days</div></div>
   </div>
   <div class="cards-grid">
-    <div class="card" data-goto="roadmap"><div class="card-icon">🗺️</div><h4>Learning Roadmap</h4><p>68% complete — 3 milestones left</p><div class="prog-wrap"><div class="prog-track"><div class="prog-fill prog-fill--primary" data-w="68"></div></div></div></div>
-    <div class="card" data-goto="quiz"><div class="card-icon">📝</div><h4>Weekly Quiz</h4><p>JavaScript async/await · 15 questions</p><div><span class="badge badge-orange">Due in 2 days</span></div></div>
-    <div class="card" data-goto="projects"><div class="card-icon">🔨</div><h4>Active Project</h4><p>REST API with Node.js — 40% done</p><div class="prog-wrap"><div class="prog-track"><div class="prog-fill prog-fill--warn" data-w="40"></div></div></div></div>
+    <div class="card" onclick="goto('roadmap')"><div class="card-icon">🗺️</div><h4>Learning Roadmap</h4><p>68% complete — 3 milestones left</p><div class="prog-wrap"><div class="prog-track"><div class="prog-fill prog-fill--primary" data-w="68"></div></div></div></div>
+    <div class="card" onclick="goto('quiz')"><div class="card-icon">📝</div><h4>Weekly Quiz</h4><p>JavaScript async/await · 15 questions</p><div><span class="badge badge-orange">Due in 2 days</span></div></div>
+    <div class="card" onclick="goto('projects')"><div class="card-icon">🔨</div><h4>Active Project</h4><p>REST API with Node.js — 40% done</p><div class="prog-wrap"><div class="prog-track"><div class="prog-fill prog-fill--warn" data-w="40"></div></div></div></div>
   </div>
 </div>
