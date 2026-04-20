@@ -2,10 +2,21 @@
 <div class="section-page" id="page-quiz">
   <div class="sec-label">Quiz System</div>
   <div class="sec-title">Weekly Knowledge Check</div>
-  <div class="sec-desc">AI-generated quiz on JavaScript async/await. 5 questions · Auto-graded with feedback.</div>
+  <div class="sec-desc">AI-generated quiz. Choose a topic and get a new quiz every time!</div>
+
+  <!-- AI Quiz Generator -->
+  <div style="margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+    <input id="quizTopic" type="text" placeholder="e.g. React Hooks, Python, CSS Flexbox..."
+      style="flex:1;min-width:200px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:50px;padding:10px 20px;color:#f0f4ff;font-size:0.9rem;outline:none;" />
+    <button id="generateQuizBtn" onclick="generateAIQuiz()"
+      style="background:#1a56ff;color:#fff;border:none;padding:10px 22px;border-radius:50px;cursor:pointer;font-size:0.9rem;font-weight:600;white-space:nowrap;">
+      🤖 Generate New Quiz
+    </button>
+  </div>
+
   <div class="row2">
     <div class="full-card">
-      <div class="card-title-row"><h3>Question <span id="qNum">1</span> of 5</h3><span class="badge badge-blue">JavaScript</span></div>
+      <div class="card-title-row"><h3>Question <span id="qNum">1</span> of 5</h3><span class="badge badge-blue" id="quizTopicBadge">JavaScript</span></div>
       <div id="quizQuestion"></div>
       <div id="quizOptions"></div>
       <div id="quizFeedback"></div>
