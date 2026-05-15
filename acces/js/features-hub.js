@@ -102,6 +102,7 @@ function initDashboard() {
 
     // ── INIT QUIZ ──
     initQuiz();
+    checkOnboarding();
 
     // ── WIRE NEXT BUTTON ──
     const nextBtn = document.getElementById("nextBtn");
