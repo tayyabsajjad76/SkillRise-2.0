@@ -533,3 +533,110 @@ async function getProjectHint() {
     hint.textContent = "❌ Could not get hint. Please try again.";
   }
 }
+
+
+
+
+
+// ── ONBOARDING ──
+async function checkOnboarding() {
+  const data = await fetchUserProfile();
+  if (!data || !data.profile) {
+    showOnboarding();
+  } else {
+    applyProfileToUI(data.profile, data.stats);
+  }
+}
+
+function showOnboarding() {
+  const overlay = document.getElementById("onboardingOverlay");
+  if (overlay) overlay.style.display = "flex";
+}
+
+async function submitOnboarding() {
+  const field  = document.getElementById("ob-field")?.value.trim();
+  const level  = document.getElementById("ob-level")?.value;
+  const hours  = document.getElementById("ob-hours")?.value;
+  const goal   = document.getElementById("ob-goal")?.value.trim();
+  const skills = document.getElementById("ob-skills")?.value.trim();
+
+  if (!field) { alert("Please enter what you want to learn!"); return; }
+  if (!goal)  { alert("Please enter your career goal!"); return; }
+
+  const btn = document.getElementById("obSubmitBtn");
+  const loading = document.getElementById("obLoading");
+  btn.disabled = true; btn.textContent = "⏳ Generating...";
+  if (loading) loading.style.display = "block";
+
+  const profile = { field, level, hours: parseInt(hours), goal, existingSkills: skills, createdAt: new Date().toISOString() };
+
+  // Save profile to MongoDB
+  await saveUserProfile(profile);
+
+  // Init stats
+  const stats = { streak: 1, quizAvg: 0, roadmapPct: 0, projectsDone: 0, readiness: 10, lastActive: new Date().toISOString() };
+  await saveUserStats(stats);
+
+  // AI generate plan
+  try {
+    const res = await fetch(`${API}/api/chat`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: `A student wants to learn ${field}. Level: ${level}. Can study ${hours} hours/day. Career goal: ${goal}. Already knows: ${skills || "nothing yet"}.
+Generate a motivating 2-sentence welcome message and their top 3 immediate action steps. Keep it short and encouraging.` })
+    });
+    const data = await res.json();
+    localStorage.setItem("sr_ai_welcome", data.reply);
+  } catch(e) {}
+
+  // Close modal, apply to UI
+  document.getElementById("onboardingOverlay").style.display = "none";
+  applyProfileToUI(profile, stats);
+  btn.disabled = false;
+  if (loading) loading.style.display = "none";
+}
+
+function applyProfileToUI(profile, stats) {
+  if (!profile) return;
+  const s = stats || {};
+
+  // Update topbar readiness pill
+  const readiness = s.readiness || 10;
+  const pill = document.querySelector(".ready-pill");
+  if (pill) pill.innerHTML = `<div class="pulse"></div>${readiness}% Job Ready`;
+
+  // Update streak in sidebar
+  const streakVal = document.querySelector(".streak-val");
+  if (streakVal) streakVal.textContent = (s.streak || 1) + " days";
+
+  // Update home stats cards
+  const statVals = document.querySelectorAll(".s-val");
+  if (statVals[0]) statVals[0].textContent = readiness + "%";
+  if (statVals[1]) statVals[1].textContent = (s.streak || 1) + " 🔥";
+  if (statVals[2]) statVals[2].textContent = (s.quizAvg || 0) + "%";
+  if (statVals[3]) statVals[3].textContent = (s.projectsDone || 0);
+
+  // Update hero text
+  const heroP = document.querySelector(".home-hero p");
+  if (heroP) heroP.textContent = `Learning ${profile.field} · Goal: ${profile.goal}`;
+
+  // Update roadmap card
+  const roadmapCard = document.querySelector(".card:first-child p");
+  if (roadmapCard) roadmapCard.textContent = `${profile.field} roadmap · ${s.roadmapPct || 0}% complete`;
+
+  // Show AI welcome if exists
+  const aiWelcome = localStorage.getItem("sr_ai_welcome");
+  if (aiWelcome) {
+    const heroGlow = document.querySelector(".home-hero-glow");
+    if (heroGlow) {
+      const tip = document.createElement("div");
+      tip.style.cssText = "margin-top:12px;padding:12px 16px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);border-radius:12px;font-size:0.84rem;color:#00e5a0;line-height:1.6;";
+      tip.textContent = "🤖 " + aiWelcome;
+      document.querySelector(".home-hero").appendChild(tip);
+      localStorage.removeItem("sr_ai_welcome");
+    }
+  }
+
+  // Update nav roadmap badge
+  const roadmapBadge = document.querySelector(".nav-item[data-page='roadmap'] .nav-badge");
+  if (roadmapBadge) roadmapBadge.textContent = (s.roadmapPct || 0) + "%";
+}
