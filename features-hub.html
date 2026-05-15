@@ -138,6 +138,65 @@
       <div class="content" id="dashboardContent"></div>
     </main>
 
+
+    <!-- ONBOARDING MODAL -->
+<div id="onboardingOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#0f1729;border:1px solid rgba(255,255,255,0.1);border-radius:24px;padding:40px;max-width:520px;width:90%;max-height:90vh;overflow-y:auto;">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:2.5rem;margin-bottom:8px;">🚀</div>
+      <h2 style="color:#f0f4ff;font-family:Syne,sans-serif;font-size:1.6rem;margin:0;">Welcome to Skill Rise 2.0!</h2>
+      <p style="color:#8892b0;margin-top:8px;font-size:0.9rem;">Let's personalize your learning journey. Takes 1 minute.</p>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <label style="color:#a0aec0;font-size:0.85rem;display:block;margin-bottom:6px;">🎯 What field do you want to learn?</label>
+      <input id="ob-field" type="text" placeholder="e.g. Cybersecurity, Web Dev, AI, Data Science..."
+        style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px 16px;color:#f0f4ff;font-size:0.9rem;outline:none;box-sizing:border-box;"/>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <label style="color:#a0aec0;font-size:0.85rem;display:block;margin-bottom:6px;">📊 Current skill level?</label>
+      <select id="ob-level"
+        style="width:100%;background:#1a2340;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px 16px;color:#f0f4ff;font-size:0.9rem;outline:none;">
+        <option value="Beginner">Beginner — Just starting out</option>
+        <option value="Intermediate">Intermediate — Know some basics</option>
+        <option value="Advanced">Advanced — Ready to go deep</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <label style="color:#a0aec0;font-size:0.85rem;display:block;margin-bottom:6px;">⏱️ How many hours per day can you study?</label>
+      <select id="ob-hours"
+        style="width:100%;background:#1a2340;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px 16px;color:#f0f4ff;font-size:0.9rem;outline:none;">
+        <option value="1">Less than 1 hour</option>
+        <option value="2">1–2 hours</option>
+        <option value="3">2–3 hours</option>
+        <option value="5">3–5 hours</option>
+        <option value="6">5+ hours</option>
+      </select>
+    </div>
+
+    <div style="margin-bottom:18px;">
+      <label style="color:#a0aec0;font-size:0.85rem;display:block;margin-bottom:6px;">💼 What's your career goal?</label>
+      <input id="ob-goal" type="text" placeholder="e.g. Get a job, Freelance, Build my own product..."
+        style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px 16px;color:#f0f4ff;font-size:0.9rem;outline:none;box-sizing:border-box;"/>
+    </div>
+
+    <div style="margin-bottom:24px;">
+      <label style="color:#a0aec0;font-size:0.85rem;display:block;margin-bottom:6px;">🛠️ Any skills you already know? (optional)</label>
+      <input id="ob-skills" type="text" placeholder="e.g. HTML, Python, JavaScript..."
+        style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px 16px;color:#f0f4ff;font-size:0.9rem;outline:none;box-sizing:border-box;"/>
+    </div>
+
+    <button id="obSubmitBtn" onclick="submitOnboarding()"
+      style="width:100%;background:linear-gradient(135deg,#1a56ff,#00e5a0);border:none;border-radius:12px;padding:14px;color:#fff;font-size:1rem;font-weight:700;cursor:pointer;font-family:Syne,sans-serif;">
+      🤖 Generate My Learning Plan
+    </button>
+    <div id="obLoading" style="display:none;text-align:center;margin-top:16px;color:#00e5a0;font-size:0.9rem;">
+      ⏳ AI is building your personalized plan...
+    </div>
+  </div>
+</div>
     <script src="./acces/js/auth.js"></script>
 <script src="./acces/js/features-hub.js" defer></script>
     <!-- <script src="./acces/js/auth.js"></script>
