@@ -1,6 +1,41 @@
 "use strict";
 
 const API = "https://skillrise-api.onrender.com";
+// ── PROFILE HELPERS ──
+function getCurrentUserEmail() {
+  try {
+    const u = JSON.parse(localStorage.getItem("sr_current_user") || "null");
+    return u ? u.email : null;
+  } catch { return null; }
+}
+
+async function fetchUserProfile() {
+  const email = getCurrentUserEmail();
+  if (!email) return null;
+  try {
+    const res = await fetch(`${API}/api/getProfile?email=${encodeURIComponent(email)}`);
+    const data = await res.json();
+    return data;
+  } catch { return null; }
+}
+
+async function saveUserProfile(profile) {
+  const email = getCurrentUserEmail();
+  if (!email) return;
+  await fetch(`${API}/api/saveProfile`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, profile })
+  });
+}
+
+async function saveUserStats(stats) {
+  const email = getCurrentUserEmail();
+  if (!email) return;
+  await fetch(`${API}/api/saveStats`, {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, stats })
+  });
+}
 
 // ── LOAD DASHBOARD SECTIONS ──
 const dashboardSections = [
