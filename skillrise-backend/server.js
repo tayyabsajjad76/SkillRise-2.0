@@ -124,57 +124,51 @@ const server = http.createServer(async (req, res) => {
     }
     if (req.method === 'POST' && req.url === '/api/chat') {
       const { message } = await getBody(req);
-const completion = await groq.chat.completions.create({
-  model: 'llama-3.3-70b-versatile',
-  messages: [{ role: 'user', content: message }],
-});
-const reply = completion.choices[0].message.content;
+      const completion = await groq.chat.completions.create({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{ role: 'user', content: message }],
+      });
+      const reply = completion.choices[0].message.content;
       return sendJSON(res, 200, { reply });
     }
+
+    // ── SAVE PROFILE ──
+    if (req.method === 'POST' && req.url === '/api/saveProfile') {
+      const { email, profile } = await getBody(req);
+      if (!email || !profile) return sendJSON(res, 400, { message: 'Missing email or profile' });
+      await usersCollection.updateOne(
+        { email: email.toLowerCase() },
+        { $set: { profile, profileSetAt: new Date() } }
+      );
+      return sendJSON(res, 200, { message: 'Profile saved!' });
+    }
+
+    // ── GET PROFILE ──
+    if (req.method === 'GET' && req.url.startsWith('/api/getProfile')) {
+      const url = new URL(req.url, 'http://localhost');
+      const email = url.searchParams.get('email');
+      if (!email) return sendJSON(res, 400, { message: 'Missing email' });
+      const user = await usersCollection.findOne(
+        { email: email.toLowerCase() },
+        { projection: { password: 0 } }
+      );
+      if (!user) return sendJSON(res, 404, { message: 'User not found' });
+      return sendJSON(res, 200, { profile: user.profile || null, stats: user.stats || null });
+    }
+
+    // ── SAVE STATS ──
+    if (req.method === 'POST' && req.url === '/api/saveStats') {
+      const { email, stats } = await getBody(req);
+      if (!email || !stats) return sendJSON(res, 400, { message: 'Missing data' });
+      await usersCollection.updateOne(
+        { email: email.toLowerCase() },
+        { $set: { stats } }
+      );
+      return sendJSON(res, 200, { message: 'Stats saved!' });
+    }
+
     sendJSON(res, 404, { message: 'Route not found' });
-
-//  
-// 
-// ── SAVE PROFILE ──
-if (req.method === 'POST' && req.url === '/api/saveProfile') {
-  const { email, profile } = await getBody(req);
-  if (!email || !profile) return sendJSON(res, 400, { message: 'Missing email or profile' });
-  await usersCollection.updateOne(
-    { email: email.toLowerCase() },
-    { $set: { profile, profileSetAt: new Date() } }
-  );
-  return sendJSON(res, 200, { message: 'Profile saved!' });
-}
-
-// ── GET PROFILE ──
-if (req.method === 'GET' && req.url.startsWith('/api/getProfile')) {
-  const url = new URL(req.url, 'http://localhost');
-  const email = url.searchParams.get('email');
-  if (!email) return sendJSON(res, 400, { message: 'Missing email' });
-  const user = await usersCollection.findOne(
-    { email: email.toLowerCase() },
-    { projection: { password: 0 } }
-  );
-  if (!user) return sendJSON(res, 404, { message: 'User not found' });
-  return sendJSON(res, 200, { profile: user.profile || null, stats: user.stats || null });
-}
-
-// ── SAVE STATS ──
-if (req.method === 'POST' && req.url === '/api/saveStats') {
-  const { email, stats } = await getBody(req);
-  if (!email || !stats) return sendJSON(res, 400, { message: 'Missing data' });
-  await usersCollection.updateOne(
-    { email: email.toLowerCase() },
-    { $set: { stats } }
-  );
-  return sendJSON(res, 200, { message: 'Stats saved!' });
-}
-  
-
-
-
-    
-  }   catch (err) {
+  } catch (err) {
     console.error(err);
     sendJSON(res, 500, { message: err.message });
   }
