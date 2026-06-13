@@ -171,6 +171,11 @@ function initDashboard() {
   }
 }
 
+document.addEventListener("DOMContentLoaded", () => {
+  const obBtn = document.getElementById("obSubmitBtn");
+  if (obBtn) obBtn.addEventListener("click", submitOnboarding);
+});
+
 loadDashboard();
 
 // ── PAGE INFO ──
