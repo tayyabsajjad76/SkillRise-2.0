@@ -2,9 +2,8 @@
 <div class="section-page" id="page-quiz">
   <div class="sec-label">Quiz System</div>
   <div class="sec-title">Weekly Knowledge Check</div>
-  <div class="sec-desc">AI-generated quiz. Choose a topic and get a new quiz every time!</div>
+  <div class="sec-desc" id="quizDesc">AI-generated quiz based on your learning field.</div>
 
-  <!-- AI Quiz Generator -->
   <div style="margin-bottom:20px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
     <input id="quizTopic" type="text" placeholder="e.g. React Hooks, Python, CSS Flexbox..."
       style="flex:1;min-width:200px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:50px;padding:10px 20px;color:#f0f4ff;font-size:0.9rem;outline:none;" />
@@ -16,7 +15,7 @@
 
   <div class="row2">
     <div class="full-card">
-      <div class="card-title-row"><h3>Question <span id="qNum">1</span> of 5</h3><span class="badge badge-blue" id="quizTopicBadge">JavaScript</span></div>
+      <div class="card-title-row"><h3>Question <span id="qNum">1</span> of 5</h3><span class="badge badge-blue" id="quizTopicBadge">Loading...</span></div>
       <div id="quizQuestion"></div>
       <div id="quizOptions"></div>
       <div id="quizFeedback"></div>
@@ -30,18 +29,15 @@
         <div class="card-title-row"><h3>Quiz Stats</h3></div>
         <div class="prog-wrap"><div class="prog-row"><span>This Quiz</span><span id="quizPct">0%</span></div><div class="prog-track"><div class="prog-fill prog-fill--primary" id="quizBar"></div></div></div>
         <div class="quiz-stats-rows">
-          <div class="quiz-stat-row"><span>Last Week</span><span class="val-accent">72%</span></div>
-          <div class="quiz-stat-row"><span>All-Time Average</span><span>78%</span></div>
-          <div class="quiz-stat-row"><span>Quizzes Completed</span><span>18</span></div>
+          <div class="quiz-stat-row"><span>Last Quiz</span><span class="val-accent" id="statLastQuiz">—</span></div>
+          <div class="quiz-stat-row"><span>All-Time Average</span><span id="statAvg">—</span></div>
+          <div class="quiz-stat-row"><span>Quizzes Completed</span><span id="statCount">0</span></div>
         </div>
       </div>
       <div class="full-card">
         <div class="card-title-row"><h3>Past Quizzes</h3></div>
-        <div class="past-quizzes">
-          <div class="past-quiz-row"><span>React Hooks</span><span class="val-accent">88%</span></div>
-          <div class="past-quiz-row"><span>ES6 Features</span><span class="val-accent">92%</span></div>
-          <div class="past-quiz-row"><span>CSS Flexbox</span><span class="val-warn">74%</span></div>
-          <div class="past-quiz-row"><span>JavaScript DOM</span><span class="val-accent">85%</span></div>
+        <div class="past-quizzes" id="pastQuizzesList">
+          <div style="color:#8892b0;font-size:0.85rem;">No quizzes yet.</div>
         </div>
       </div>
     </div>
