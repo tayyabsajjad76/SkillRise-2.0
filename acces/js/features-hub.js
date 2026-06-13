@@ -116,19 +116,6 @@ function initDashboard() {
     if (resumeUpdateBtn)  resumeUpdateBtn.addEventListener("click", updateResume);
     if (resumePreviewBtn) resumePreviewBtn.addEventListener("click", updateResume);
 
-    // ── WIRE TASK LIST ──
-    const taskList = document.getElementById("taskList");
-    if (taskList) taskList.addEventListener("click", (e) => {
-      const item = e.target.closest(".task-item");
-      if (!item) return;
-      item.classList.toggle("done");
-      item.querySelector(".task-check").innerHTML = item.classList.contains("done") ? '<i class="fa-solid fa-check"></i>' : "";
-      const done  = document.querySelectorAll("#taskList .task-item.done").length;
-      const total = document.querySelectorAll("#taskList .task-item").length;
-      const badge = document.getElementById("taskBadge");
-      if (badge) badge.textContent = done + " / " + total + " Done";
-    });
-
     // ── WIRE CHAT BUTTONS ──
     const sendBtn = document.getElementById("chatSendBtn");
     const chatInp = document.getElementById("chatInput");
