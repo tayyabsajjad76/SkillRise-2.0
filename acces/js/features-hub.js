@@ -207,6 +207,7 @@ function goto(id) {
   if (window.innerWidth < 768) document.getElementById("sidebar").classList.remove("open");
   if (id === "analytics" && !document.getElementById("chartBars").children.length) buildChart();
   if (id === "quiz") initQuiz();
+  if (id === "roadmap") autoLoadRoadmap();
 }
 
 document.querySelectorAll(".nav-item[data-page]").forEach((item) => {
@@ -413,27 +414,105 @@ async function sendMsg() {
 }
 
 // ── AI ROADMAP (any field) ──
+async function autoLoadRoadmap() {
+  const output  = document.getElementById("aiRoadmapOutput");
+  const fieldEl = document.getElementById("roadmapField");
+  const btn     = document.getElementById("generateRoadmapBtn");
+  if (!output || !fieldEl) return;
+
+  // Already generated — don't re-generate
+  if (output.dataset.generated === "1") return;
+
+  // Fetch profile from MongoDB
+  const data = await fetchUserProfile();
+  const profile = data?.profile;
+  if (!profile || !profile.field) return; // no profile yet, let user type manually
+
+  // Auto-fill the input field
+  fieldEl.value = profile.field;
+
+  // Auto-generate
+  if (btn) { btn.textContent = "⏳ Generating..."; btn.disabled = true; }
+  output.style.display = "block";
+  output.textContent = "⏳ Building your personalized roadmap...";
+
+  try {
+    const prompt = `Generate a detailed, personalized learning roadmap for a student with these details:
+- Field: ${profile.field}
+- Current Level: ${profile.level || "Beginner"}
+- Study Hours Per Day: ${profile.hours || 2} hours
+- Career Goal: ${profile.goal || "Get a job"}
+- Already Knows: ${profile.existingSkills || "Nothing yet"}
+
+Create a step-by-step roadmap with numbered milestones. For each milestone include:
+1. Topic name
+2. What to learn (2-3 bullet points)
+3. Recommended free resource (YouTube channel or website)
+4. Estimated time to complete
+
+Keep it practical, motivating, and tailored to their current level. Format clearly.`;
+
+    const res  = await fetch(`${API}/api/chat`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: prompt }),
+    });
+    const resp = await res.json();
+    output.textContent = resp.reply;
+    output.dataset.generated = "1"; // mark so won't re-generate on revisit
+  } catch (err) {
+    output.textContent = "❌ Could not generate roadmap. Please try again.";
+  }
+  if (btn) { btn.textContent = "🔄 Regenerate Roadmap"; btn.disabled = false; }
+}
+
 async function generateRoadmap() {
   const btn    = document.getElementById("generateRoadmapBtn");
   const output = document.getElementById("aiRoadmapOutput");
   const fieldEl= document.getElementById("roadmapField");
   if (!btn || !output) return;
 
-  const field = fieldEl?.value.trim() || "Full Stack Web Development";
+  const field = fieldEl?.value.trim();
   if (!field) { alert("Please enter a field first!"); return; }
 
+  // Reset generated flag so user can regenerate with custom input
+  output.dataset.generated = "0";
+
   btn.textContent = "⏳ Generating..."; btn.disabled = true;
+  output.style.display = "block"; output.textContent = "⏳ Building your roadmap...";
+
+  // Try to get profile for richer prompt
+  const profileData = await fetchUserProfile();
+  const profile = profileData?.profile;
+
+  const prompt = profile
+    ? `Generate a detailed, personalized learning roadmap for a student with these details:
+- Field: ${field}
+- Current Level: ${profile.level || "Beginner"}
+- Study Hours Per Day: ${profile.hours || 2} hours
+- Career Goal: ${profile.goal || "Get a job"}
+- Already Knows: ${profile.existingSkills || "Nothing yet"}
+
+Create a step-by-step roadmap with numbered milestones. For each milestone include:
+1. Topic name
+2. What to learn (2-3 bullet points)
+3. Recommended free resource (YouTube channel or website)
+4. Estimated time to complete
+
+Keep it practical, motivating, and tailored to their current level. Format clearly.`
+    : `Generate a detailed learning roadmap for someone who wants to learn ${field}. Include numbered milestones, topics to cover, recommended free resources, and estimated time for each step.`;
+
   try {
     const res  = await fetch(`${API}/api/chat`, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: `Generate a detailed learning roadmap for a student who wants to become a ${field} professional. Include milestones, topics to learn, resources, and estimated time for each step. Format it clearly with numbered steps.` }),
+      body: JSON.stringify({ message: prompt }),
     });
     const data = await res.json();
-    output.style.display = "block"; output.textContent = data.reply;
+    output.textContent = data.reply;
+    output.dataset.generated = "1";
   } catch (err) {
-    output.style.display = "block"; output.textContent = "❌ Could not generate roadmap. Please try again.";
+    output.textContent = "❌ Could not generate roadmap. Please try again.";
   }
-  btn.textContent = "🤖 Generate AI Roadmap"; btn.disabled = false;
+  btn.textContent = "🔄 Regenerate Roadmap"; btn.disabled = false;
 }
 
 // ── AI INTERVIEW ──
