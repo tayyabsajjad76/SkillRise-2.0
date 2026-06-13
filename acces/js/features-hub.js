@@ -642,14 +642,22 @@ function renderTaskList(tasks) {
 function renderWeeklyPlan(days) {
   const weeklyPlan = document.getElementById("weeklyPlan");
   if (!weeklyPlan) return;
-  weeklyPlan.innerHTML = days.map(d => `
-    <div class="task-item">
+  weeklyPlan.innerHTML = "";
+  days.forEach(d => {
+    const div = document.createElement("div");
+    div.className = "task-item";
+    div.innerHTML = `
       <div class="task-check"></div>
       <div class="task-inner">
         <div class="task-text">${d.day} — ${d.topic}</div>
         ${d.note ? `<div class="task-type">${d.note}</div>` : ""}
-      </div>
-    </div>`).join("");
+      </div>`;
+    div.addEventListener("click", () => {
+      div.classList.toggle("done");
+      div.querySelector(".task-check").innerHTML = div.classList.contains("done") ? '<i class="fa-solid fa-check"></i>' : "";
+    });
+    weeklyPlan.appendChild(div);
+  });
 }
 
 async function autoLoadPlanner() {
