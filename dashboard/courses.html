@@ -2,46 +2,24 @@
 <div class="section-page" id="page-courses">
   <div class="sec-label">Smart Course Suggestions</div>
   <div class="sec-title">AI-Recommended Next Courses</div>
-  <div class="sec-desc">Based on your skill gaps and career goal (Full Stack Developer), the AI suggests these courses next.</div>
-  <div class="cards-grid">
-    <div class="course-card">
-      <div class="course-thumb course-thumb--react">⚛️</div>
-      <div class="course-body">
-        <div class="course-badge-row"><span class="badge badge-blue">Top Pick</span></div>
-        <div class="course-title">Advanced React &amp; Redux</div>
-        <div class="course-meta">Fills gap: State management · Est. 2 weeks</div>
-        <div class="prog-wrap"><div class="prog-row"><span>Match</span><span>96%</span></div><div class="prog-track"><div class="prog-fill prog-fill--primary" data-w="96"></div></div></div>
-        <button class="btn btn-primary btn-sm" onclick="window.open('https://www.udemy.com/course/react-redux/', '_blank')">Start Course</button>
-      </div>
-    </div>
-    <div class="course-card">
-      <div class="course-thumb course-thumb--purple">🏗️</div>
-      <div class="course-body">
-        <div class="course-badge-row"><span class="badge badge-purple">Interview Prep</span></div>
-        <div class="course-title">System Design Fundamentals</div>
-        <div class="course-meta">Fills gap: Architecture · Est. 3 weeks</div>
-        <div class="prog-wrap"><div class="prog-row"><span>Match</span><span>91%</span></div><div class="prog-track"><div class="prog-fill prog-fill--purple" data-w="91"></div></div></div>
-        <button class="btn btn-outline btn-sm" onclick="window.open('https://www.educative.io/courses/grokking-the-system-design-interview', '_blank')">View Course</button>
-      </div>
-    </div>
-    <div class="course-card">
-      <div class="course-thumb course-thumb--cyan">🐳</div>
-      <div class="course-body">
-        <div class="course-badge-row"><span class="badge badge-blue">DevOps</span></div>
-        <div class="course-title">Docker &amp; Deployment</div>
-        <div class="course-meta">Fills gap: DevOps basics · Est. 1.5 weeks</div>
-        <div class="prog-wrap"><div class="prog-row"><span>Match</span><span>84%</span></div><div class="prog-track"><div class="prog-fill prog-fill--cyan" data-w="84"></div></div></div>
-        <button class="btn btn-outline btn-sm" onclick="window.open('https://www.udemy.com/course/docker-mastery/', '_blank')">View Course</button>
-      </div>
-    </div>
+  <div class="sec-desc" id="coursesDesc">Based on your skill gaps and career goal, AI suggests these courses.</div>
+
+  <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <button id="generateCoursesBtn" onclick="generateCourses()"
+      style="background:#1a56ff;color:#fff;border:none;padding:10px 22px;border-radius:50px;cursor:pointer;font-size:0.88rem;font-weight:600;">
+      🤖 Refresh Suggestions
+    </button>
+    <span id="coursesStatus" style="color:#8892b0;font-size:0.82rem;"></span>
   </div>
-  <div class="full-card">
-    <div class="card-title-row"><h3>All Courses Progress</h3><span class="badge badge-green">6 / 10 Done</span></div>
-    <div class="courses-all-grid">
-      <div class="prog-wrap"><div class="prog-row"><span>HTML &amp; CSS</span><span class="skill-mastery-val--accent">✓ Done</span></div><div class="prog-track"><div class="prog-fill prog-fill--solid-accent" data-w="100"></div></div></div>
-      <div class="prog-wrap"><div class="prog-row"><span>JavaScript</span><span class="skill-mastery-val--accent">✓ Done</span></div><div class="prog-track"><div class="prog-fill prog-fill--solid-accent" data-w="100"></div></div></div>
-      <div class="prog-wrap"><div class="prog-row"><span>React Advanced</span><span>65%</span></div><div class="prog-track"><div class="prog-fill prog-fill--primary" data-w="65"></div></div></div>
-      <div class="prog-wrap"><div class="prog-row"><span>Node.js</span><span>20%</span></div><div class="prog-track"><div class="prog-fill prog-fill--solid-warn" data-w="20"></div></div></div>
+
+  <div class="cards-grid" id="courseCardsGrid">
+    <div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ Generating course suggestions...</div>
+  </div>
+
+  <div class="full-card" style="margin-top:20px;">
+    <div class="card-title-row"><h3>All Courses Progress</h3><span class="badge badge-green" id="coursesDoneCount">0 Done</span></div>
+    <div class="courses-all-grid" id="coursesProgressGrid">
+      <div style="color:#8892b0;font-size:0.85rem;">No courses started yet.</div>
     </div>
   </div>
 </div>
