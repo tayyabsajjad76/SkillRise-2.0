@@ -414,84 +414,95 @@ async function sendMsg() {
 }
 
 // ── AI ROADMAP (any field) ──
-function renderRoadmapCards(text, stepsContainer, countBadge) {
-  // Parse AI text into milestone cards
-  // Splits on "Milestone N" or "Step N" or numbered lines like "1." at start
-  const blocks = text.split(/\n(?=(?:#{1,3}\s*)?(?:Milestone|Step)\s*\d+|^\d+\.\s)/im).filter(b => b.trim());
-  if (blocks.length < 2) {
-    // Fallback: split on double newlines
-    const lines = text.split(/\n\n+/).filter(b => b.trim());
-    renderFallbackCards(lines, stepsContainer, countBadge);
+// ── AI ROADMAP ──
+function renderSkillBadges(existingSkills, completedSkills) {
+  const container = document.getElementById("skillBadgesContainer");
+  if (!container) return;
+  const prior   = (existingSkills || "").split(/[,،\n]+/).map(s => s.trim()).filter(Boolean);
+  const done    = Array.isArray(completedSkills) ? completedSkills : [];
+  const all     = [...new Set([...prior, ...done])];
+  if (all.length === 0) {
+    container.innerHTML = `<span style="color:#8892b0;font-size:0.85rem;">Complete roadmap steps to earn badges</span>`;
     return;
   }
+  container.innerHTML = all.map(s =>
+    done.includes(s)
+      ? `<span class="badge badge-green">🏆 ${s} ✓</span>`
+      : `<span class="badge badge-green">${s} ✓</span>`
+  ).join(" ");
+}
+
+async function markStepComplete(stepTitle, btnEl) {
+  btnEl.disabled = true;
+  btnEl.textContent = "✅ Done!";
+  btnEl.style.cssText += ";background:rgba(0,229,160,0.15);color:#00e5a0;border-color:rgba(0,229,160,0.4);";
+
+  const rmStep = btnEl.closest(".rm-step");
+  if (rmStep) {
+    const dot = rmStep.querySelector(".rm-dot");
+    if (dot) { dot.className = "rm-dot done"; dot.innerHTML = `<i class="fa-solid fa-check"></i>`; }
+    const badge = rmStep.querySelector(".rm-meta .badge");
+    if (badge) { badge.className = "badge badge-green"; badge.textContent = "Completed ✓"; }
+  }
+
+  const data = await fetchUserProfile();
+  const profile = data?.profile || {};
+  const completed = Array.isArray(profile.completedSkills) ? profile.completedSkills : [];
+  if (!completed.includes(stepTitle)) {
+    completed.push(stepTitle);
+    profile.completedSkills = completed;
+    await saveUserProfile(profile);
+  }
+
+  renderSkillBadges(profile.existingSkills || "", completed);
+
+  const totalSteps = document.querySelectorAll("#aiRoadmapSteps .rm-step").length;
+  const pct = totalSteps > 0 ? Math.round((completed.length / totalSteps) * 100) : 0;
+  const roadmapBadge = document.querySelector(".nav-item[data-page='roadmap'] .nav-badge");
+  if (roadmapBadge) roadmapBadge.textContent = pct + "%";
+}
+
+function renderRoadmapCards(text, stepsContainer, countBadge, completedSkills) {
+  const done = Array.isArray(completedSkills) ? completedSkills : [];
+  const blocks = text.split(/\n(?=(?:#{1,3}\s*)?(?:Milestone|Step)\s*\d+)/im).filter(b => b.trim());
+  const list = blocks.length >= 2 ? blocks : text.split(/\n\n+/).filter(b => b.trim());
 
   stepsContainer.innerHTML = "";
-  blocks.forEach((block, i) => {
+  list.forEach((block, i) => {
     const lines = block.trim().split("\n").filter(l => l.trim());
-    // First line = title (strip ### Milestone N: prefix)
-    const titleRaw = lines[0].replace(/^#{1,3}\s*/, "").replace(/^(?:Milestone|Step)\s*\d+[:\-–]?\s*/i, "").replace(/^\d+\.\s*\*?\*?/, "").replace(/\*\*/g, "").trim();
+    const titleRaw = lines[0]
+      .replace(/^#{1,3}\s*/, "")
+      .replace(/^(?:Milestone|Step)\s*\d+[:\-–]?\s*/i, "")
+      .replace(/^\d+\.\s*\*?\*?/, "")
+      .replace(/\*\*/g, "").trim();
     const desc = lines.slice(1).map(l => l.replace(/^\*+\s*/, "• ").replace(/\*\*/g, "")).join("\n").trim();
 
-    const isFirst = i === 0;
-    const dotClass = isFirst ? "rm-dot active" : "rm-dot locked";
-    const dotContent = isFirst ? `<i class="fa-solid fa-play"></i>` : `<i class="fa-solid fa-lock"></i>`;
-    const connectorLine = i < blocks.length - 1 ? `<div class="rm-connector"></div>` : "";
-    const statusBadge = isFirst
-      ? `<span class="badge badge-blue">Start Here</span>`
+    const isDone = done.includes(titleRaw);
+    const dotClass   = isDone ? "rm-dot done" : i === 0 ? "rm-dot active" : "rm-dot locked";
+    const dotContent = isDone ? `<i class="fa-solid fa-check"></i>` : i === 0 ? `<i class="fa-solid fa-play"></i>` : `<i class="fa-solid fa-lock"></i>`;
+    const connector  = i < list.length - 1 ? `<div class="rm-connector${isDone ? " done" : ""}"></div>` : "";
+    const statusBadge = isDone
+      ? `<span class="badge badge-green">Completed ✓</span>`
+      : i === 0 ? `<span class="badge badge-blue">Start Here</span>`
       : `<span class="badge badge-orange">Step ${i + 1}</span>`;
+    const completeBtn = isDone ? "" : `<button onclick="markStepComplete('${titleRaw.replace(/'/g, "\\'")}', this)"
+      style="margin-top:8px;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:5px 14px;color:#8892b0;font-size:0.78rem;cursor:pointer;">
+      Mark Complete
+    </button>`;
 
     const card = document.createElement("div");
     card.className = "rm-step";
     card.innerHTML = `
-      <div class="rm-line">
-        <div class="${dotClass}">${dotContent}</div>
-        ${connectorLine}
-      </div>
+      <div class="rm-line"><div class="${dotClass}">${dotContent}</div>${connector}</div>
       <div class="rm-body">
         <h4>${titleRaw || "Step " + (i + 1)}</h4>
         <p style="white-space:pre-line;font-size:0.82rem;color:#8892b0;">${desc}</p>
-        <div class="rm-meta">${statusBadge}</div>
+        <div class="rm-meta">${statusBadge}${completeBtn}</div>
       </div>`;
     stepsContainer.appendChild(card);
   });
 
-  if (countBadge) countBadge.textContent = blocks.length + " Steps";
-}
-
-function renderFallbackCards(lines, stepsContainer, countBadge) {
-  stepsContainer.innerHTML = "";
-  lines.forEach((block, i) => {
-    const trimmed = block.trim().replace(/\*\*/g, "");
-    const firstLine = trimmed.split("\n")[0];
-    const rest = trimmed.split("\n").slice(1).join("\n");
-    const dotClass = i === 0 ? "rm-dot active" : "rm-dot locked";
-    const dotContent = i === 0 ? `<i class="fa-solid fa-play"></i>` : `<i class="fa-solid fa-lock"></i>`;
-    const connectorLine = i < lines.length - 1 ? `<div class="rm-connector"></div>` : "";
-    const card = document.createElement("div");
-    card.className = "rm-step";
-    card.innerHTML = `
-      <div class="rm-line"><div class="${dotClass}">${dotContent}</div>${connectorLine}</div>
-      <div class="rm-body">
-        <h4>${firstLine}</h4>
-        <p style="white-space:pre-line;font-size:0.82rem;color:#8892b0;">${rest}</p>
-        <div class="rm-meta"><span class="badge badge-orange">Step ${i + 1}</span></div>
-      </div>`;
-    stepsContainer.appendChild(card);
-  });
-  if (countBadge) countBadge.textContent = lines.length + " Steps";
-}
-
-function renderSkillBadges(existingSkills) {
-  const container = document.getElementById("skillBadgesContainer");
-  if (!container) return;
-  if (!existingSkills || !existingSkills.trim()) {
-    container.innerHTML = `<span style="color:#8892b0;font-size:0.85rem;">No prior skills listed</span>`;
-    return;
-  }
-  const skills = existingSkills.split(/[,،\n]+/).map(s => s.trim()).filter(Boolean);
-  container.innerHTML = skills.map(s =>
-    `<span class="badge badge-green">${s} ✓</span>`
-  ).join(" ");
+  if (countBadge) countBadge.textContent = list.length + " Steps";
 }
 
 async function autoLoadRoadmap() {
@@ -501,15 +512,13 @@ async function autoLoadRoadmap() {
   const btn            = document.getElementById("generateRoadmapBtn");
   if (!stepsContainer || !fieldEl) return;
 
-  // Already generated this session — don't re-generate
   if (stepsContainer.dataset.generated === "1") return;
 
-  // Fetch profile from MongoDB
-  const data = await fetchUserProfile();
+  const data    = await fetchUserProfile();
   const profile = data?.profile;
+  const completed = Array.isArray(profile?.completedSkills) ? profile.completedSkills : [];
 
-  // Render skill badges from profile
-  renderSkillBadges(profile?.existingSkills || "");
+  renderSkillBadges(profile?.existingSkills || "", completed);
 
   if (!profile || !profile.field) {
     stepsContainer.innerHTML = `<div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">Fill in your profile first to auto-generate roadmap.</div>`;
@@ -517,10 +526,7 @@ async function autoLoadRoadmap() {
     return;
   }
 
-  // Auto-fill field input
   fieldEl.value = profile.field;
-
-  // Update desc
   const desc = document.getElementById("roadmapDesc");
   if (desc) desc.textContent = `AI-built for ${profile.field} · Goal: ${profile.goal || "Career growth"}`;
 
@@ -554,7 +560,7 @@ No intro text. Just the milestones.`;
       body: JSON.stringify({ message: prompt }),
     });
     const resp = await res.json();
-    renderRoadmapCards(resp.reply, stepsContainer, countBadge);
+    renderRoadmapCards(resp.reply, stepsContainer, countBadge, completed);
     stepsContainer.dataset.generated = "1";
   } catch (err) {
     stepsContainer.innerHTML = `<div style="color:#ff6b6b;">❌ Could not generate roadmap. Please try again.</div>`;
@@ -577,7 +583,8 @@ async function generateRoadmap() {
   stepsContainer.innerHTML = `<div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ Building your roadmap...</div>`;
 
   const profileData = await fetchUserProfile();
-  const profile = profileData?.profile;
+  const profile     = profileData?.profile;
+  const completed   = Array.isArray(profile?.completedSkills) ? profile.completedSkills : [];
 
   const prompt = `Generate a detailed, personalized learning roadmap for a student with these details:
 - Field: ${field}
@@ -606,7 +613,7 @@ No intro text. Just the milestones.`;
       body: JSON.stringify({ message: prompt }),
     });
     const data = await res.json();
-    renderRoadmapCards(data.reply, stepsContainer, countBadge);
+    renderRoadmapCards(data.reply, stepsContainer, countBadge, completed);
     stepsContainer.dataset.generated = "1";
   } catch (err) {
     stepsContainer.innerHTML = `<div style="color:#ff6b6b;">❌ Could not generate roadmap. Please try again.</div>`;
