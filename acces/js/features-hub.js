@@ -208,6 +208,7 @@ function goto(id) {
   if (id === "analytics" && !document.getElementById("chartBars").children.length) buildChart();
   if (id === "quiz") initQuiz();
   if (id === "roadmap") autoLoadRoadmap();
+  if (id === "planner") autoLoadPlanner();
 }
 
 document.querySelectorAll(".nav-item[data-page]").forEach((item) => {
@@ -619,6 +620,148 @@ No intro text. Just the milestones.`;
     stepsContainer.innerHTML = `<div style="color:#ff6b6b;">❌ Could not generate roadmap. Please try again.</div>`;
   }
   btn.textContent = "🔄 Regenerate Roadmap"; btn.disabled = false;
+}
+
+// ── DAILY PLANNER ──
+function renderTaskList(tasks) {
+  const taskList = document.getElementById("taskList");
+  const badge    = document.getElementById("taskBadge");
+  if (!taskList) return;
+
+  taskList.innerHTML = "";
+  tasks.forEach((task, i) => {
+    const div = document.createElement("div");
+    div.className = "task-item";
+    div.innerHTML = `
+      <div class="task-check"></div>
+      <div class="task-inner">
+        <div class="task-text">${task.text}</div>
+        <div class="task-type">${task.type}</div>
+      </div>`;
+    div.addEventListener("click", () => {
+      div.classList.toggle("done");
+      div.querySelector(".task-check").innerHTML = div.classList.contains("done") ? '<i class="fa-solid fa-check"></i>' : "";
+      const done  = taskList.querySelectorAll(".task-item.done").length;
+      const total = taskList.querySelectorAll(".task-item").length;
+      if (badge) badge.textContent = done + " / " + total + " Done";
+    });
+    taskList.appendChild(div);
+  });
+
+  const total = tasks.length;
+  if (badge) badge.textContent = "0 / " + total + " Done";
+}
+
+function renderWeeklyPlan(days) {
+  const weeklyPlan = document.getElementById("weeklyPlan");
+  if (!weeklyPlan) return;
+  weeklyPlan.innerHTML = days.map(d => `
+    <div class="task-item">
+      <div class="task-check"></div>
+      <div class="task-inner">
+        <div class="task-text">${d.day} — ${d.topic}</div>
+        ${d.note ? `<div class="task-type">${d.note}</div>` : ""}
+      </div>
+    </div>`).join("");
+}
+
+async function autoLoadPlanner() {
+  const taskList = document.getElementById("taskList");
+  if (!taskList) return;
+  if (taskList.dataset.generated === "1") return;
+
+  const data    = await fetchUserProfile();
+  const profile = data?.profile;
+  if (!profile || !profile.field) {
+    taskList.innerHTML = `<div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">Fill in your profile first to generate a plan.</div>`;
+    return;
+  }
+
+  const desc = document.getElementById("plannerDesc");
+  const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  if (desc) desc.textContent = `AI-generated tasks for ${today} · ${profile.field}`;
+
+  await generateDailyPlan();
+}
+
+async function generateDailyPlan() {
+  const taskList  = document.getElementById("taskList");
+  const btn       = document.getElementById("generatePlannerBtn");
+  const statusEl  = document.getElementById("plannerStatus");
+  const tipEl     = document.getElementById("aiTipText");
+  if (!taskList) return;
+
+  const data    = await fetchUserProfile();
+  const profile = data?.profile;
+  if (!profile || !profile.field) {
+    alert("Complete your profile onboarding first!");
+    return;
+  }
+
+  if (btn) { btn.textContent = "⏳ Generating..."; btn.disabled = true; }
+  if (statusEl) statusEl.textContent = "";
+  taskList.innerHTML = `<div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ AI is building your plan...</div>`;
+
+  const completed = Array.isArray(profile.completedSkills) ? profile.completedSkills.join(", ") : "none yet";
+  const today = new Date().toLocaleDateString("en-US", { weekday: "long" });
+
+  try {
+    const res = await fetch(`${API}/api/chat`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: `You are a study planner AI. Generate a daily + weekly learning plan for this student:
+- Field: ${profile.field}
+- Level: ${profile.level || "Beginner"}
+- Study Hours/Day: ${profile.hours || 2} hours
+- Career Goal: ${profile.goal || "Get a job"}
+- Already Knows: ${profile.existingSkills || "nothing"}
+- Completed Roadmap Steps: ${completed}
+- Today is: ${today}
+
+Return ONLY valid JSON, no markdown, no backticks, no extra text:
+{
+  "tasks": [
+    {"text": "task description", "type": "emoji Type · duration"},
+    {"text": "task description", "type": "emoji Type · duration"}
+  ],
+  "week": [
+    {"day": "Mon", "topic": "topic name", "note": "optional note"},
+    {"day": "Tue", "topic": "topic name", "note": ""},
+    {"day": "Wed", "topic": "topic name", "note": ""},
+    {"day": "Thu", "topic": "topic name", "note": ""},
+    {"day": "Fri", "topic": "topic name", "note": "📝 Weekly Quiz"}
+  ],
+  "tip": "one personalized AI tip based on their level and field"
+}
+
+tasks should be 4-5 items, realistic for ${profile.hours || 2} hours/day, based on what they haven't learned yet.` })
+    });
+
+    const resp = await res.json();
+    let parsed;
+    try {
+      const clean = resp.reply.replace(/```json|```/g, "").trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      const match = resp.reply.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+    }
+
+    if (parsed?.tasks) {
+      renderTaskList(parsed.tasks);
+      taskList.dataset.generated = "1";
+    }
+    if (parsed?.week) renderWeeklyPlan(parsed.week);
+    if (parsed?.tip && tipEl) tipEl.textContent = parsed.tip;
+    if (statusEl) {
+      const now = new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+      statusEl.textContent = `Generated at ${now}`;
+    }
+
+  } catch (err) {
+    taskList.innerHTML = `<div style="color:#ff6b6b;">❌ Could not generate plan. Please try again.</div>`;
+  }
+
+  if (btn) { btn.textContent = "🔄 Regenerate Plan"; btn.disabled = false; }
 }
 
 // ── AI INTERVIEW ──
