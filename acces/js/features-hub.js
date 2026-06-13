@@ -193,9 +193,10 @@ function goto(id) {
 
   if (window.innerWidth < 768) document.getElementById("sidebar").classList.remove("open");
   if (id === "analytics" && !document.getElementById("chartBars").children.length) buildChart();
-  if (id === "quiz") initQuiz();
+  if (id === "quiz") autoLoadQuiz();
   if (id === "roadmap") autoLoadRoadmap();
   if (id === "planner") autoLoadPlanner();
+  if (id === "resources") autoLoadResources();
 }
 
 document.querySelectorAll(".nav-item[data-page]").forEach((item) => {
@@ -222,6 +223,7 @@ const questions = [
 
 let aiQuestions = null;
 let qIndex = 0, score = 0, answered = false;
+let currentQuizTopic = "General";
 
 function initQuiz() { qIndex = 0; score = 0; answered = false; aiQuestions = null; renderQ(); }
 
@@ -271,12 +273,56 @@ function updScore() {
   const pct = Math.round((score / total) * 100);
   document.getElementById("quizPct").textContent = pct + "%";
   document.getElementById("quizBar").style.width  = pct + "%";
+  // Save when last question answered
+  if (answered && qIndex === total - 1) {
+    saveQuizResult(currentQuizTopic, pct);
+  }
 }
 
 // ── AI QUIZ GENERATOR ──
+async function autoLoadQuiz() {
+  const quizOptions = document.getElementById("quizOptions");
+  if (quizOptions?.dataset.generated === "1") { loadQuizStats(); return; }
+  const data = await fetchUserProfile();
+  const profile = data?.profile;
+  if (!profile?.field) { initQuiz(); return; }
+  const topicEl = document.getElementById("quizTopic");
+  if (topicEl && !topicEl.value.trim()) topicEl.value = profile.field;
+  const desc = document.getElementById("quizDesc");
+  if (desc) desc.textContent = `AI-generated quiz based on your ${profile.field} learning path.`;
+  loadQuizStats();
+  initQuiz();
+  await generateAIQuiz();
+  if (quizOptions) quizOptions.dataset.generated = "1";
+}
+
+function loadQuizStats() {
+  const history = JSON.parse(localStorage.getItem("sr_quiz_history") || "[]");
+  const countEl = document.getElementById("statCount");
+  const avgEl   = document.getElementById("statAvg");
+  const lastEl  = document.getElementById("statLastQuiz");
+  const pastEl  = document.getElementById("pastQuizzesList");
+
+  if (countEl) countEl.textContent = history.length;
+  if (history.length > 0) {
+    const avg = Math.round(history.reduce((s, q) => s + q.pct, 0) / history.length);
+    if (avgEl) avgEl.textContent = avg + "%";
+    if (lastEl) lastEl.textContent = history[history.length - 1].pct + "%";
+    if (pastEl) {
+      const recent = history.slice(-5).reverse();
+      pastEl.innerHTML = recent.map(q => {
+        const cls = q.pct >= 80 ? "val-accent" : q.pct >= 60 ? "val-warn" : "val-danger";
+        return `<div class="past-quiz-row"><span>${q.topic}</span><span class="${cls}">${q.pct}%</span></div>`;
+      }).join("");
+    }
+  }
+}
+
 async function generateAIQuiz() {
   const topicEl = document.getElementById("quizTopic");
-  const topic   = topicEl?.value.trim() || "JavaScript";
+  const data    = await fetchUserProfile();
+  const profile = data?.profile;
+  const topic   = topicEl?.value.trim() || profile?.field || "General Knowledge";
   const btn     = document.getElementById("generateQuizBtn");
   const badge   = document.getElementById("quizTopicBadge");
 
@@ -290,18 +336,19 @@ Return ONLY valid JSON array, no extra text, no markdown, no backticks. Format:
 [{"q":"question text","opts":["A","B","C","D"],"ans":0,"exp":"explanation"}]
 ans is the index (0-3) of correct answer.` }),
     });
-    const data = await res.json();
+    const resp = await res.json();
     let parsed;
     try {
-      const clean = data.reply.replace(/```json|```/g, "").trim();
+      const clean = resp.reply.replace(/```json|```/g, "").trim();
       parsed = JSON.parse(clean);
     } catch {
-      const match = data.reply.match(/\[[\s\S]*\]/);
+      const match = resp.reply.match(/\[[\s\S]*\]/);
       if (match) parsed = JSON.parse(match[0]);
     }
     if (parsed && Array.isArray(parsed) && parsed.length > 0) {
       aiQuestions = parsed;
       qIndex = 0; score = 0; answered = false;
+      currentQuizTopic = topic;
       if (badge) badge.textContent = topic;
       renderQ();
     } else {
@@ -311,6 +358,14 @@ ans is the index (0-3) of correct answer.` }),
     alert("❌ Could not generate quiz. Please try again.");
   }
   if (btn) { btn.textContent = "🤖 Generate New Quiz"; btn.disabled = false; }
+}
+
+function saveQuizResult(topic, pct) {
+  const history = JSON.parse(localStorage.getItem("sr_quiz_history") || "[]");
+  history.push({ topic, pct, date: new Date().toISOString() });
+  if (history.length > 20) history.shift(); // keep last 20
+  localStorage.setItem("sr_quiz_history", JSON.stringify(history));
+  loadQuizStats();
 }
 
 // ── AI RESUME HELPER ──
@@ -861,6 +916,101 @@ async function getProjectHint() {
 
 
 
+
+// ── RESOURCE ASSISTANT ──
+async function autoLoadResources() {
+  const videoList = document.getElementById("videoList");
+  if (!videoList) return;
+  if (videoList.dataset.generated === "1") return;
+  await generateResources();
+}
+
+async function generateResources() {
+  const videoList   = document.getElementById("videoList");
+  const docsList    = document.getElementById("docsList");
+  const btn         = document.getElementById("generateResourcesBtn");
+  const statusEl    = document.getElementById("resourceStatus");
+  const descEl      = document.getElementById("resourceDesc");
+  if (!videoList) return;
+
+  const data    = await fetchUserProfile();
+  const profile = data?.profile;
+  if (!profile?.field) { alert("Complete your profile first!"); return; }
+
+  if (btn) { btn.textContent = "⏳ Loading..."; btn.disabled = true; }
+  videoList.innerHTML = `<div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ Finding best resources...</div>`;
+  if (docsList) docsList.innerHTML = `<div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ Loading...</div>`;
+
+  const completed = Array.isArray(profile.completedSkills) ? profile.completedSkills.join(", ") : "none";
+
+  try {
+    const res = await fetch(`${API}/api/chat`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: `You are a learning resource curator. Recommend resources for this student:
+- Field: ${profile.field}
+- Level: ${profile.level || "Beginner"}
+- Career Goal: ${profile.goal || "Get a job"}
+- Already Knows: ${profile.existingSkills || "nothing"}
+- Completed: ${completed}
+
+Return ONLY valid JSON, no markdown, no backticks:
+{
+  "videos": [
+    {"title": "video title", "channel": "channel name", "duration": "e.g. 45m", "url": "https://youtube.com/..."},
+    {"title": "...", "channel": "...", "duration": "...", "url": "..."},
+    {"title": "...", "channel": "...", "duration": "...", "url": "..."}
+  ],
+  "docs": [
+    {"title": "resource title", "site": "site name", "type": "e.g. Documentation", "url": "https://..."},
+    {"title": "...", "site": "...", "type": "...", "url": "..."},
+    {"title": "...", "site": "...", "type": "...", "url": "..."},
+    {"title": "...", "site": "...", "type": "...", "url": "..."}
+  ]
+}
+Use REAL existing URLs only. YouTube videos must be real.` })
+    });
+
+    const resp = await res.json();
+    let parsed;
+    try {
+      const clean = resp.reply.replace(/```json|```/g, "").trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      const match = resp.reply.match(/\{[\s\S]*\}/);
+      if (match) parsed = JSON.parse(match[0]);
+    }
+
+    if (parsed?.videos) {
+      videoList.innerHTML = parsed.videos.map(v => `
+        <a href="${v.url}" target="_blank" style="text-decoration:none;">
+          <div class="res-card">
+            <div class="res-icon res-icon--yt"><i class="fa-brands fa-youtube"></i></div>
+            <div><div class="res-title">${v.title}</div><div class="res-sub">${v.channel} · YouTube · ${v.duration}</div></div>
+            <i class="fa-solid fa-arrow-up-right-from-square res-arrow"></i>
+          </div>
+        </a>`).join("");
+      videoList.dataset.generated = "1";
+    }
+
+    if (parsed?.docs && docsList) {
+      docsList.innerHTML = parsed.docs.map(d => `
+        <a href="${d.url}" target="_blank" style="text-decoration:none;">
+          <div class="res-card">
+            <div class="res-icon res-icon--blue"><i class="fa-solid fa-file-lines"></i></div>
+            <div><div class="res-title">${d.title}</div><div class="res-sub">${d.site} · ${d.type}</div></div>
+            <i class="fa-solid fa-arrow-up-right-from-square res-arrow"></i>
+          </div>
+        </a>`).join("");
+    }
+
+    if (descEl) descEl.textContent = `AI-picked resources for ${profile.field} · ${profile.level || "Beginner"} level`;
+    if (statusEl) statusEl.textContent = "Updated just now";
+
+  } catch (err) {
+    videoList.innerHTML = `<div style="color:#ff6b6b;">❌ Could not load resources. Please try again.</div>`;
+  }
+  if (btn) { btn.textContent = "🔄 Refresh Resources"; btn.disabled = false; }
+}
 
 // ── ONBOARDING ──
 async function checkOnboarding() {
