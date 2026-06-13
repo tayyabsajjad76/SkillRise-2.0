@@ -2,34 +2,28 @@
 <div class="section-page" id="page-resources">
   <div class="sec-label">Resource Assistant</div>
   <div class="sec-title">Curated Learning Materials</div>
-  <div class="sec-desc">AI-picked resources for your current topic: React Hooks &amp; Node.js. Click any resource to open it.</div>
+  <div class="sec-desc" id="resourceDesc">AI-picked resources based on your learning field.</div>
+
+  <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <button id="generateResourcesBtn" onclick="generateResources()"
+      style="background:#1a56ff;color:#fff;border:none;padding:10px 22px;border-radius:50px;cursor:pointer;font-size:0.88rem;font-weight:600;">
+      🤖 Generate Resources
+    </button>
+    <span id="resourceStatus" style="color:#8892b0;font-size:0.82rem;"></span>
+  </div>
+
   <div class="row2">
     <div class="full-card">
       <div class="card-title-row"><h3>🎥 Video Tutorials</h3></div>
-      <a href="https://www.youtube.com/watch?v=TNhaISOUy6Q" target="_blank" style="text-decoration:none;">
-        <div class="res-card"><div class="res-icon res-icon--yt"><i class="fa-brands fa-youtube"></i></div><div><div class="res-title">React Hooks Full Course</div><div class="res-sub">Traversy Media · YouTube · 2h 15m</div></div><i class="fa-solid fa-arrow-up-right-from-square res-arrow"></i></div>
-      </a>
-      <a href="https://www.youtube.com/watch?v=l8kdhjpKDHY" target="_blank" style="text-decoration:none;">
-        <div class="res-card"><div class="res-icon res-icon--yt"><i class="fa-brands fa-youtube"></i></div><div><div class="res-title">Node.js REST API in 1 Hour</div><div class="res-sub">Fireship · YouTube · 58m</div></div><i class="fa-solid fa-arrow-up-right-from-square res-arrow"></i></div>
-      </a>
-      <a href="https://www.youtube.com/watch?v=V_Kr9OSfDeU" target="_blank" style="text-decoration:none;">
-        <div class="res-card"><div class="res-icon res-icon--yt"><i class="fa-brands fa-youtube"></i></div><div><div class="res-title">Async/Await Explained</div><div class="res-sub">Web Dev Simplified · 24m</div></div><i class="fa-solid fa-arrow-up-right-from-square res-arrow"></i></div>
-      </a>
+      <div id="videoList">
+        <div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ Click "Generate Resources" to load...</div>
+      </div>
     </div>
     <div class="full-card">
       <div class="card-title-row"><h3>📄 Docs &amp; Articles</h3></div>
-      <a href="https://react.dev/learn" target="_blank" style="text-decoration:none;">
-        <div class="res-card"><div class="res-icon res-icon--blue"><i class="fa-solid fa-file-lines"></i></div><div><div class="res-title">React Official Docs</div><div class="res-sub">react.dev · Documentation</div></div><i class="fa-solid fa-arrow-up-right-from-square res-arrow"></i></div>
-      </a>
-      <a href="https://devhints.io/react" target="_blank" style="text-decoration:none;">
-        <div class="res-card"><div class="res-icon res-icon--accent"><i class="fa-solid fa-note-sticky"></i></div><div><div class="res-title">React Hooks Cheat Sheet</div><div class="res-sub">devhints.io · Quick Reference</div></div><i class="fa-solid fa-arrow-up-right-from-square res-arrow"></i></div>
-      </a>
-      <a href="https://blog.logrocket.com/useeffect-hook-complete-guide/" target="_blank" style="text-decoration:none;">
-        <div class="res-card"><div class="res-icon res-icon--purple"><i class="fa-solid fa-blog"></i></div><div><div class="res-title">Understanding useEffect</div><div class="res-sub">blog.logrocket.com</div></div><i class="fa-solid fa-arrow-up-right-from-square res-arrow"></i></div>
-      </a>
-      <a href="https://exercism.org/tracks/javascript" target="_blank" style="text-decoration:none;">
-        <div class="res-card"><div class="res-icon res-icon--cyan"><i class="fa-solid fa-code"></i></div><div><div class="res-title">30 React Practice Exercises</div><div class="res-sub">exercism.io · Interactive</div></div><i class="fa-solid fa-arrow-up-right-from-square res-arrow"></i></div>
-      </a>
+      <div id="docsList">
+        <div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ Loading...</div>
+      </div>
     </div>
   </div>
 </div>
