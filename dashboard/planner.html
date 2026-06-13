@@ -2,29 +2,33 @@
 <div class="section-page" id="page-planner">
   <div class="sec-label">Daily &amp; Weekly Planner</div>
   <div class="sec-title">Today's Learning Plan</div>
-  <div class="sec-desc">AI-generated tasks for Monday, Week 6. Tap a task to mark it complete.</div>
+  <div class="sec-desc" id="plannerDesc">AI-generated tasks based on your profile.</div>
+
+  <div style="margin-bottom:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+    <button id="generatePlannerBtn" onclick="generateDailyPlan()"
+      style="background:#1a56ff;color:#fff;border:none;padding:10px 22px;border-radius:50px;cursor:pointer;font-size:0.88rem;font-weight:600;">
+      🤖 Generate Today's Plan
+    </button>
+    <span id="plannerStatus" style="color:#8892b0;font-size:0.82rem;"></span>
+  </div>
+
   <div class="row2">
     <div class="full-card">
-      <div class="card-title-row"><h3>📅 Today's Tasks</h3><span class="badge badge-orange" id="taskBadge">2 / 5 Done</span></div>
+      <div class="card-title-row"><h3>📅 Today's Tasks</h3><span class="badge badge-orange" id="taskBadge">0 / 0 Done</span></div>
       <div id="taskList">
-        <div class="task-item done"><div class="task-check"><i class="fa-solid fa-check"></i></div><div class="task-inner"><div class="task-text">Read: React Hooks official docs</div><div class="task-type">📖 Reading · 30 min</div></div></div>
-        <div class="task-item done"><div class="task-check"><i class="fa-solid fa-check"></i></div><div class="task-inner"><div class="task-text">Build a counter using useState</div><div class="task-type">💻 Exercise · 20 min</div></div></div>
-        <div class="task-item"><div class="task-check"></div><div class="task-inner"><div class="task-text">Quiz: JavaScript async/await concepts</div><div class="task-type">📝 Quiz · 15 questions</div></div></div>
-        <div class="task-item"><div class="task-check"></div><div class="task-inner"><div class="task-text">Watch: Node.js REST API tutorial</div><div class="task-type">🎥 Video · 45 min</div></div></div>
-        <div class="task-item"><div class="task-check"></div><div class="task-inner"><div class="task-text">Code: Build a basic Express server</div><div class="task-type">💻 Exercise · 1 hr</div></div></div>
+        <div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ Click "Generate Today's Plan" to get AI tasks...</div>
       </div>
     </div>
     <div class="col-flex">
       <div class="full-card">
         <div class="card-title-row"><h3>📆 This Week</h3></div>
-        <div class="task-item"><div class="task-check task-check--week-done"><i class="fa-solid fa-check"></i></div><div class="task-inner"><div class="task-text">Mon — React Hooks exercises</div></div></div>
-        <div class="task-item"><div class="task-check"></div><div class="task-inner"><div class="task-text">Wed — Node.js API introduction</div></div></div>
-        <div class="task-item"><div class="task-check"></div><div class="task-inner"><div class="task-text">Fri — Weekly Quiz (15 questions)</div><div class="task-type">📝 Due Friday</div></div></div>
-        <div class="task-item"><div class="task-check"></div><div class="task-inner"><div class="task-text">Sun — Bi-weekly Project Submission</div><div class="task-type">🔨 Due in 3 days</div></div></div>
+        <div id="weeklyPlan">
+          <div style="color:#8892b0;font-size:0.85rem;padding:10px 0;">Weekly plan will appear after generating.</div>
+        </div>
       </div>
       <div class="full-card planner-tip">
         <div class="card-title-row"><h3>AI Tip 🤖</h3></div>
-        <p>Based on your quiz scores, spend extra time on <strong>async/await patterns</strong>. A practice exercise has been added to Thursday's plan.</p>
+        <p id="aiTipText">Your personalized tip will appear after generating your plan.</p>
       </div>
     </div>
   </div>
