@@ -197,6 +197,7 @@ function goto(id) {
   if (id === "roadmap") autoLoadRoadmap();
   if (id === "planner") autoLoadPlanner();
   if (id === "resources") autoLoadResources();
+  if (id === "courses") autoLoadCourses();
 }
 
 document.querySelectorAll(".nav-item[data-page]").forEach((item) => {
@@ -916,6 +917,177 @@ async function getProjectHint() {
 
 
 
+
+// ── COURSE SUGGESTIONS ──
+const COURSE_EMOJIS = ["⚛️","🔐","🐍","🏗️","🐳","📊","🤖","🌐","📱","🔧"];
+const COURSE_COLORS = ["react","purple","cyan","blue","accent","warn"];
+
+function getCourseProgress() {
+  return JSON.parse(localStorage.getItem("sr_course_progress") || "{}");
+}
+function saveCourseProgress(data) {
+  localStorage.setItem("sr_course_progress", JSON.stringify(data));
+}
+
+function renderCourseCards(courses) {
+  const grid = document.getElementById("courseCardsGrid");
+  if (!grid) return;
+  const progress = getCourseProgress();
+  grid.innerHTML = "";
+
+  courses.forEach((c, i) => {
+    const pct   = progress[c.title] || 0;
+    const emoji = COURSE_EMOJIS[i % COURSE_EMOJIS.length];
+    const color = COURSE_COLORS[i % COURSE_COLORS.length];
+    const isDone = pct >= 100;
+    const badgeHtml = i === 0
+      ? `<span class="badge badge-blue">Top Pick</span>`
+      : isDone
+      ? `<span class="badge badge-green">Completed ✓</span>`
+      : `<span class="badge badge-orange">${c.tag || "Recommended"}</span>`;
+
+    const card = document.createElement("div");
+    card.className = "course-card";
+    card.innerHTML = `
+      <div class="course-thumb course-thumb--${color}">${emoji}</div>
+      <div class="course-body">
+        <div class="course-badge-row">${badgeHtml}</div>
+        <div class="course-title">${c.title}</div>
+        <div class="course-meta">${c.meta}</div>
+        <div class="prog-wrap">
+          <div class="prog-row"><span>Progress</span><span id="cpct-${i}">${pct}%</span></div>
+          <div class="prog-track"><div class="prog-fill prog-fill--primary" id="cbar-${i}" style="width:${pct}%"></div></div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn btn-primary btn-sm" onclick="window.open('${c.url}','_blank');markCourseViewed('${c.title.replace(/'/g,"\\'")}',${i})">
+            ${isDone ? "Review" : pct > 0 ? "Continue" : "Start Course"}
+          </button>
+          ${!isDone ? `<button class="btn btn-outline btn-sm" onclick="markCourseDone('${c.title.replace(/'/g,"\\'")}',${i})">Mark Done</button>` : ""}
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+
+  renderCoursesProgress(courses);
+}
+
+function markCourseViewed(title, idx) {
+  const progress = getCourseProgress();
+  if (!progress[title]) progress[title] = 25;
+  else if (progress[title] < 75) progress[title] += 25;
+  saveCourseProgress(progress);
+  const pct = progress[title];
+  const pctEl = document.getElementById("cpct-" + idx);
+  const barEl = document.getElementById("cbar-" + idx);
+  if (pctEl) pctEl.textContent = pct + "%";
+  if (barEl) barEl.style.width = pct + "%";
+  updateCourseDoneCount();
+}
+
+function markCourseDone(title, idx) {
+  const progress = getCourseProgress();
+  progress[title] = 100;
+  saveCourseProgress(progress);
+  const pctEl = document.getElementById("cpct-" + idx);
+  const barEl = document.getElementById("cbar-" + idx);
+  if (pctEl) pctEl.textContent = "100%";
+  if (barEl) barEl.style.width = "100%";
+  updateCourseDoneCount();
+}
+
+function updateCourseDoneCount() {
+  const progress = getCourseProgress();
+  const done = Object.values(progress).filter(v => v >= 100).length;
+  const total = Object.keys(progress).length;
+  const el = document.getElementById("coursesDoneCount");
+  if (el) el.textContent = done + " / " + total + " Done";
+}
+
+function renderCoursesProgress(courses) {
+  const grid = document.getElementById("coursesProgressGrid");
+  if (!grid) return;
+  const progress = getCourseProgress();
+  grid.innerHTML = "";
+  courses.forEach(c => {
+    const pct = progress[c.title] || 0;
+    const fillClass = pct >= 100 ? "prog-fill--solid-accent" : "prog-fill--primary";
+    const label = pct >= 100 ? `<span class="skill-mastery-val--accent">✓ Done</span>` : `<span>${pct}%</span>`;
+    const div = document.createElement("div");
+    div.className = "prog-wrap";
+    div.innerHTML = `<div class="prog-row"><span>${c.title}</span>${label}</div><div class="prog-track"><div class="prog-fill ${fillClass}" style="width:${pct}%"></div></div>`;
+    grid.appendChild(div);
+  });
+  updateCourseDoneCount();
+}
+
+async function autoLoadCourses() {
+  const grid = document.getElementById("courseCardsGrid");
+  if (!grid) return;
+  if (grid.dataset.generated === "1") return;
+  await generateCourses();
+}
+
+async function generateCourses() {
+  const grid    = document.getElementById("courseCardsGrid");
+  const btn     = document.getElementById("generateCoursesBtn");
+  const descEl  = document.getElementById("coursesDesc");
+  const statusEl = document.getElementById("coursesStatus");
+  if (!grid) return;
+
+  const data    = await fetchUserProfile();
+  const profile = data?.profile;
+  if (!profile?.field) { alert("Complete your profile first!"); return; }
+
+  if (btn) { btn.textContent = "⏳ Loading..."; btn.disabled = true; }
+  grid.innerHTML = `<div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ Finding best courses for you...</div>`;
+  grid.dataset.generated = "0";
+
+  const completed = Array.isArray(profile.completedSkills) ? profile.completedSkills.join(", ") : "none";
+
+  try {
+    const res = await fetch(`${API}/api/chat`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: `You are a course recommender AI. Suggest courses for this student:
+- Field: ${profile.field}
+- Level: ${profile.level || "Beginner"}
+- Career Goal: ${profile.goal || "Get a job"}
+- Already Knows: ${profile.existingSkills || "nothing"}
+- Completed Topics: ${completed}
+
+Return ONLY valid JSON array, no markdown, no backticks, no extra text:
+[
+  {"title": "Course Name", "meta": "Fills gap: topic · Est. X weeks", "tag": "Top Pick", "url": "https://...real url..."},
+  {"title": "Course Name", "meta": "Fills gap: topic · Est. X weeks", "tag": "Recommended", "url": "https://..."},
+  {"title": "Course Name", "meta": "Fills gap: topic · Est. X weeks", "tag": "Skill Builder", "url": "https://..."}
+]
+Use REAL course URLs from Udemy, Coursera, freeCodeCamp, YouTube, or similar. Exactly 3 courses.` })
+    });
+
+    const resp = await res.json();
+    let parsed;
+    try {
+      const clean = resp.reply.replace(/```json|```/g, "").trim();
+      parsed = JSON.parse(clean);
+    } catch {
+      const match = resp.reply.match(/\[[\s\S]*\]/);
+      if (match) parsed = JSON.parse(match[0]);
+    }
+
+    if (parsed && Array.isArray(parsed) && parsed.length > 0) {
+      // Store courses list for progress tracking
+      localStorage.setItem("sr_courses_list", JSON.stringify(parsed));
+      renderCourseCards(parsed);
+      grid.dataset.generated = "1";
+      if (descEl) descEl.textContent = `Based on your ${profile.field} path and career goal: ${profile.goal || "Get a job"}`;
+      if (statusEl) statusEl.textContent = "Updated just now";
+    } else {
+      grid.innerHTML = `<div style="color:#ff6b6b;">❌ Could not load courses. Please try again.</div>`;
+    }
+  } catch (err) {
+    grid.innerHTML = `<div style="color:#ff6b6b;">❌ Could not load courses. Please try again.</div>`;
+  }
+  if (btn) { btn.textContent = "🔄 Refresh Suggestions"; btn.disabled = false; }
+}
 
 // ── RESOURCE ASSISTANT ──
 async function autoLoadResources() {
