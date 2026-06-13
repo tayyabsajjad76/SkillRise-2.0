@@ -414,27 +414,118 @@ async function sendMsg() {
 }
 
 // ── AI ROADMAP (any field) ──
-async function autoLoadRoadmap() {
-  const output  = document.getElementById("aiRoadmapOutput");
-  const fieldEl = document.getElementById("roadmapField");
-  const btn     = document.getElementById("generateRoadmapBtn");
-  if (!output || !fieldEl) return;
+function renderRoadmapCards(text, stepsContainer, countBadge) {
+  // Parse AI text into milestone cards
+  // Splits on "Milestone N" or "Step N" or numbered lines like "1." at start
+  const blocks = text.split(/\n(?=(?:#{1,3}\s*)?(?:Milestone|Step)\s*\d+|^\d+\.\s)/im).filter(b => b.trim());
+  if (blocks.length < 2) {
+    // Fallback: split on double newlines
+    const lines = text.split(/\n\n+/).filter(b => b.trim());
+    renderFallbackCards(lines, stepsContainer, countBadge);
+    return;
+  }
 
-  // Already generated — don't re-generate
-  if (output.dataset.generated === "1") return;
+  stepsContainer.innerHTML = "";
+  blocks.forEach((block, i) => {
+    const lines = block.trim().split("\n").filter(l => l.trim());
+    // First line = title (strip ### Milestone N: prefix)
+    const titleRaw = lines[0].replace(/^#{1,3}\s*/, "").replace(/^(?:Milestone|Step)\s*\d+[:\-–]?\s*/i, "").replace(/^\d+\.\s*\*?\*?/, "").replace(/\*\*/g, "").trim();
+    const desc = lines.slice(1).map(l => l.replace(/^\*+\s*/, "• ").replace(/\*\*/g, "")).join("\n").trim();
+
+    const isFirst = i === 0;
+    const dotClass = isFirst ? "rm-dot active" : "rm-dot locked";
+    const dotContent = isFirst ? `<i class="fa-solid fa-play"></i>` : `<i class="fa-solid fa-lock"></i>`;
+    const connectorLine = i < blocks.length - 1 ? `<div class="rm-connector"></div>` : "";
+    const statusBadge = isFirst
+      ? `<span class="badge badge-blue">Start Here</span>`
+      : `<span class="badge badge-orange">Step ${i + 1}</span>`;
+
+    const card = document.createElement("div");
+    card.className = "rm-step";
+    card.innerHTML = `
+      <div class="rm-line">
+        <div class="${dotClass}">${dotContent}</div>
+        ${connectorLine}
+      </div>
+      <div class="rm-body">
+        <h4>${titleRaw || "Step " + (i + 1)}</h4>
+        <p style="white-space:pre-line;font-size:0.82rem;color:#8892b0;">${desc}</p>
+        <div class="rm-meta">${statusBadge}</div>
+      </div>`;
+    stepsContainer.appendChild(card);
+  });
+
+  if (countBadge) countBadge.textContent = blocks.length + " Steps";
+}
+
+function renderFallbackCards(lines, stepsContainer, countBadge) {
+  stepsContainer.innerHTML = "";
+  lines.forEach((block, i) => {
+    const trimmed = block.trim().replace(/\*\*/g, "");
+    const firstLine = trimmed.split("\n")[0];
+    const rest = trimmed.split("\n").slice(1).join("\n");
+    const dotClass = i === 0 ? "rm-dot active" : "rm-dot locked";
+    const dotContent = i === 0 ? `<i class="fa-solid fa-play"></i>` : `<i class="fa-solid fa-lock"></i>`;
+    const connectorLine = i < lines.length - 1 ? `<div class="rm-connector"></div>` : "";
+    const card = document.createElement("div");
+    card.className = "rm-step";
+    card.innerHTML = `
+      <div class="rm-line"><div class="${dotClass}">${dotContent}</div>${connectorLine}</div>
+      <div class="rm-body">
+        <h4>${firstLine}</h4>
+        <p style="white-space:pre-line;font-size:0.82rem;color:#8892b0;">${rest}</p>
+        <div class="rm-meta"><span class="badge badge-orange">Step ${i + 1}</span></div>
+      </div>`;
+    stepsContainer.appendChild(card);
+  });
+  if (countBadge) countBadge.textContent = lines.length + " Steps";
+}
+
+function renderSkillBadges(existingSkills) {
+  const container = document.getElementById("skillBadgesContainer");
+  if (!container) return;
+  if (!existingSkills || !existingSkills.trim()) {
+    container.innerHTML = `<span style="color:#8892b0;font-size:0.85rem;">No prior skills listed</span>`;
+    return;
+  }
+  const skills = existingSkills.split(/[,،\n]+/).map(s => s.trim()).filter(Boolean);
+  container.innerHTML = skills.map(s =>
+    `<span class="badge badge-green">${s} ✓</span>`
+  ).join(" ");
+}
+
+async function autoLoadRoadmap() {
+  const stepsContainer = document.getElementById("aiRoadmapSteps");
+  const countBadge     = document.getElementById("roadmapStepCount");
+  const fieldEl        = document.getElementById("roadmapField");
+  const btn            = document.getElementById("generateRoadmapBtn");
+  if (!stepsContainer || !fieldEl) return;
+
+  // Already generated this session — don't re-generate
+  if (stepsContainer.dataset.generated === "1") return;
 
   // Fetch profile from MongoDB
   const data = await fetchUserProfile();
   const profile = data?.profile;
-  if (!profile || !profile.field) return; // no profile yet, let user type manually
 
-  // Auto-fill the input field
+  // Render skill badges from profile
+  renderSkillBadges(profile?.existingSkills || "");
+
+  if (!profile || !profile.field) {
+    stepsContainer.innerHTML = `<div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">Fill in your profile first to auto-generate roadmap.</div>`;
+    if (countBadge) countBadge.textContent = "—";
+    return;
+  }
+
+  // Auto-fill field input
   fieldEl.value = profile.field;
 
-  // Auto-generate
+  // Update desc
+  const desc = document.getElementById("roadmapDesc");
+  if (desc) desc.textContent = `AI-built for ${profile.field} · Goal: ${profile.goal || "Career growth"}`;
+
   if (btn) { btn.textContent = "⏳ Generating..."; btn.disabled = true; }
-  output.style.display = "block";
-  output.textContent = "⏳ Building your personalized roadmap...";
+  stepsContainer.innerHTML = `<div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ Building your personalized roadmap...</div>`;
 
   try {
     const prompt = `Generate a detailed, personalized learning roadmap for a student with these details:
@@ -444,62 +535,70 @@ async function autoLoadRoadmap() {
 - Career Goal: ${profile.goal || "Get a job"}
 - Already Knows: ${profile.existingSkills || "Nothing yet"}
 
-Create a step-by-step roadmap with numbered milestones. For each milestone include:
-1. Topic name
-2. What to learn (2-3 bullet points)
-3. Recommended free resource (YouTube channel or website)
-4. Estimated time to complete
+Return EXACTLY 6 to 8 milestones. Format each milestone like this:
 
-Keep it practical, motivating, and tailored to their current level. Format clearly.`;
+Milestone 1: [Topic Name]
+What to learn:
+• point 1
+• point 2
+• point 3
+Free Resource: [YouTube channel or website name]
+Time: [e.g. 1 week]
+
+Milestone 2: ...
+
+No intro text. Just the milestones.`;
 
     const res  = await fetch(`${API}/api/chat`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: prompt }),
     });
     const resp = await res.json();
-    output.textContent = resp.reply;
-    output.dataset.generated = "1"; // mark so won't re-generate on revisit
+    renderRoadmapCards(resp.reply, stepsContainer, countBadge);
+    stepsContainer.dataset.generated = "1";
   } catch (err) {
-    output.textContent = "❌ Could not generate roadmap. Please try again.";
+    stepsContainer.innerHTML = `<div style="color:#ff6b6b;">❌ Could not generate roadmap. Please try again.</div>`;
   }
   if (btn) { btn.textContent = "🔄 Regenerate Roadmap"; btn.disabled = false; }
 }
 
 async function generateRoadmap() {
-  const btn    = document.getElementById("generateRoadmapBtn");
-  const output = document.getElementById("aiRoadmapOutput");
-  const fieldEl= document.getElementById("roadmapField");
-  if (!btn || !output) return;
+  const btn            = document.getElementById("generateRoadmapBtn");
+  const stepsContainer = document.getElementById("aiRoadmapSteps");
+  const countBadge     = document.getElementById("roadmapStepCount");
+  const fieldEl        = document.getElementById("roadmapField");
+  if (!btn || !stepsContainer) return;
 
   const field = fieldEl?.value.trim();
   if (!field) { alert("Please enter a field first!"); return; }
 
-  // Reset generated flag so user can regenerate with custom input
-  output.dataset.generated = "0";
-
+  stepsContainer.dataset.generated = "0";
   btn.textContent = "⏳ Generating..."; btn.disabled = true;
-  output.style.display = "block"; output.textContent = "⏳ Building your roadmap...";
+  stepsContainer.innerHTML = `<div style="color:#8892b0;font-size:0.9rem;padding:20px 0;">⏳ Building your roadmap...</div>`;
 
-  // Try to get profile for richer prompt
   const profileData = await fetchUserProfile();
   const profile = profileData?.profile;
 
-  const prompt = profile
-    ? `Generate a detailed, personalized learning roadmap for a student with these details:
+  const prompt = `Generate a detailed, personalized learning roadmap for a student with these details:
 - Field: ${field}
-- Current Level: ${profile.level || "Beginner"}
-- Study Hours Per Day: ${profile.hours || 2} hours
-- Career Goal: ${profile.goal || "Get a job"}
-- Already Knows: ${profile.existingSkills || "Nothing yet"}
+- Current Level: ${profile?.level || "Beginner"}
+- Study Hours Per Day: ${profile?.hours || 2} hours
+- Career Goal: ${profile?.goal || "Get a job"}
+- Already Knows: ${profile?.existingSkills || "Nothing yet"}
 
-Create a step-by-step roadmap with numbered milestones. For each milestone include:
-1. Topic name
-2. What to learn (2-3 bullet points)
-3. Recommended free resource (YouTube channel or website)
-4. Estimated time to complete
+Return EXACTLY 6 to 8 milestones. Format each milestone like this:
 
-Keep it practical, motivating, and tailored to their current level. Format clearly.`
-    : `Generate a detailed learning roadmap for someone who wants to learn ${field}. Include numbered milestones, topics to cover, recommended free resources, and estimated time for each step.`;
+Milestone 1: [Topic Name]
+What to learn:
+• point 1
+• point 2
+• point 3
+Free Resource: [YouTube channel or website name]
+Time: [e.g. 1 week]
+
+Milestone 2: ...
+
+No intro text. Just the milestones.`;
 
   try {
     const res  = await fetch(`${API}/api/chat`, {
@@ -507,10 +606,10 @@ Keep it practical, motivating, and tailored to their current level. Format clear
       body: JSON.stringify({ message: prompt }),
     });
     const data = await res.json();
-    output.textContent = data.reply;
-    output.dataset.generated = "1";
+    renderRoadmapCards(data.reply, stepsContainer, countBadge);
+    stepsContainer.dataset.generated = "1";
   } catch (err) {
-    output.textContent = "❌ Could not generate roadmap. Please try again.";
+    stepsContainer.innerHTML = `<div style="color:#ff6b6b;">❌ Could not generate roadmap. Please try again.</div>`;
   }
   btn.textContent = "🔄 Regenerate Roadmap"; btn.disabled = false;
 }
