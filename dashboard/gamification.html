@@ -5,28 +5,27 @@
   <div class="sec-desc">Level up, earn badges, and climb the leaderboard. Every milestone is celebrated!</div>
   <div class="row2">
     <div class="full-card">
-      <div class="card-title-row"><h3>Level Progress</h3><span class="badge badge-orange">Level 7 ⭐</span></div>
+      <div class="card-title-row"><h3>Level Progress</h3><span class="badge badge-orange" id="levelBadge">Level 1 ⭐</span></div>
       <div class="level-center">
-        <div class="level-number">⭐ 7</div>
-        <div class="level-label">Rising Star</div>
-        <div class="prog-wrap"><div class="prog-row"><span>XP to Level 8</span><span>3,420 / 4,000</span></div><div class="prog-track"><div class="prog-fill prog-fill--warn" data-w="85"></div></div></div>
+        <div class="level-number" id="levelNumber">⭐ 1</div>
+        <div class="level-label" id="levelLabel">Newcomer</div>
+        <div class="prog-wrap">
+          <div class="prog-row"><span>XP to next level</span><span id="xpLabel">0 / 1,000</span></div>
+          <div class="prog-track"><div class="prog-fill prog-fill--warn" id="xpBar" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:8px;color:#8892b0;font-size:0.82rem;">Total XP: <span id="totalXpLabel" style="color:#f0a500;font-weight:700;">0</span></div>
       </div>
       <div class="leaderboard">
         <div class="leaderboard-title">LEADERBOARD</div>
         <div class="leaderboard-row"><span>🥇 Ali Hassan</span><span class="val-accent">4,200 XP</span></div>
         <div class="leaderboard-row"><span>🥈 Zara Khan</span><span class="val-accent">4,100 XP</span></div>
-        <div class="leaderboard-row--you"><span>⭐ <strong>You (Tayyab)</strong></span><span class="val-warn">3,420 XP · #12</span></div>
+        <div class="leaderboard-row--you" id="leaderboardYou"><span>⭐ <strong>You</strong></span><span class="val-warn" id="yourXpLabel">0 XP · #12</span></div>
       </div>
     </div>
     <div class="full-card">
-      <div class="card-title-row"><h3>Earned Badges</h3><span class="badge badge-green">4 / 10</span></div>
-      <div class="badge-grid">
-        <div class="badge-card"><div class="badge-emoji">🏆</div><div class="badge-name">First Project</div><div class="badge-desc">Submitted first project</div></div>
-        <div class="badge-card"><div class="badge-emoji">🔥</div><div class="badge-name">7-Day Streak</div><div class="badge-desc">7 days in a row</div></div>
-        <div class="badge-card"><div class="badge-emoji">🎤</div><div class="badge-name">First Interview</div><div class="badge-desc">Completed mock interview</div></div>
-        <div class="badge-card"><div class="badge-emoji">⭐</div><div class="badge-name">Quiz Master</div><div class="badge-desc">Scored 90%+ on quiz</div></div>
-        <div class="badge-card locked"><div class="badge-emoji">🚀</div><div class="badge-name">Career Ready</div><div class="badge-desc">Reach 90% readiness</div></div>
-        <div class="badge-card locked"><div class="badge-emoji">📄</div><div class="badge-name">Resume Pro</div><div class="badge-desc">Complete your CV</div></div>
+      <div class="card-title-row"><h3>Earned Badges</h3><span class="badge badge-green" id="badgeCount">0 / 6</span></div>
+      <div class="badge-grid" id="badgeGrid">
+        <!-- rendered by JS -->
       </div>
     </div>
   </div>
