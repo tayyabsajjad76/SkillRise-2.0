@@ -298,26 +298,30 @@ async function autoLoadQuiz() {
   if (quizOptions) quizOptions.dataset.generated = "1";
 }
 
-function loadQuizStats() {
-  const history = JSON.parse(localStorage.getItem("sr_quiz_history") || "[]");
+function loadQuizStatsFromProfile(profile) {
+  const history = Array.isArray(profile?.quizHistory) ? profile.quizHistory : [];
   const countEl = document.getElementById("statCount");
   const avgEl   = document.getElementById("statAvg");
   const lastEl  = document.getElementById("statLastQuiz");
   const pastEl  = document.getElementById("pastQuizzesList");
-
   if (countEl) countEl.textContent = history.length;
   if (history.length > 0) {
-    const avg = Math.round(history.reduce((s, q) => s + q.pct, 0) / history.length);
+    const avg = Math.round(history.reduce((s,q) => s+q.pct, 0) / history.length);
     if (avgEl) avgEl.textContent = avg + "%";
-    if (lastEl) lastEl.textContent = history[history.length - 1].pct + "%";
+    if (lastEl) lastEl.textContent = history[history.length-1].pct + "%";
     if (pastEl) {
       const recent = history.slice(-5).reverse();
       pastEl.innerHTML = recent.map(q => {
-        const cls = q.pct >= 80 ? "val-accent" : q.pct >= 60 ? "val-warn" : "val-danger";
+        const cls = q.pct>=80 ? "val-accent" : q.pct>=60 ? "val-warn" : "val-danger";
         return `<div class="past-quiz-row"><span>${q.topic}</span><span class="${cls}">${q.pct}%</span></div>`;
       }).join("");
     }
   }
+}
+
+async function loadQuizStats() {
+  const data = await fetchUserProfile();
+  loadQuizStatsFromProfile(data?.profile);
 }
 
 async function generateAIQuiz() {
@@ -362,12 +366,15 @@ ans is the index (0-3) of correct answer.` }),
   if (btn) { btn.textContent = "🤖 Generate New Quiz"; btn.disabled = false; }
 }
 
-function saveQuizResult(topic, pct) {
-  const history = JSON.parse(localStorage.getItem("sr_quiz_history") || "[]");
+async function saveQuizResult(topic, pct) {
+  const profileData = await fetchUserProfile();
+  const profile = profileData?.profile || {};
+  const history = Array.isArray(profile.quizHistory) ? profile.quizHistory : [];
   history.push({ topic, pct, date: new Date().toISOString() });
   if (history.length > 20) history.shift();
-  localStorage.setItem("sr_quiz_history", JSON.stringify(history));
-  loadQuizStats();
+  profile.quizHistory = history;
+  await saveUserProfile(profile);
+  loadQuizStatsFromProfile(profile);
   addXP(XP_PER_QUIZ, "quiz");
 }
 
@@ -417,11 +424,10 @@ const XP_PER_COURSE    = 150;
 const LEVEL_THRESHOLDS = [0,1000,2000,3500,5000,7000,9500,12500,16000,20000,25000];
 const LEVEL_NAMES      = ["Newcomer","Curious Learner","Rising Star","Skill Builder","Achiever","Expert","Pro","Master","Legend","Elite","Grandmaster"];
 
-function calcXP() {
-  const quizHistory  = JSON.parse(localStorage.getItem("sr_quiz_history")  || "[]");
-  const courseProgress = JSON.parse(localStorage.getItem("sr_course_progress") || "{}");
-  const completedRoadmap = JSON.parse(localStorage.getItem("sr_completed_roadmap") || "[]");
-
+function calcXP(profile) {
+  const quizHistory    = Array.isArray(profile?.quizHistory)    ? profile.quizHistory    : [];
+  const courseProgress = typeof profile?.courseProgress === "object" && profile.courseProgress ? profile.courseProgress : {};
+  const completedRoadmap = Array.isArray(profile?.completedSkills) ? profile.completedSkills : [];
   const quizXP   = quizHistory.length * XP_PER_QUIZ;
   const roadXP   = completedRoadmap.length * XP_PER_ROADMAP;
   const courseXP = Object.values(courseProgress).filter(v => v >= 100).length * XP_PER_COURSE;
@@ -450,21 +456,25 @@ function addXP(amount, reason) {
 }
 
 // ── ANALYTICS ──
-function autoLoadAnalytics() {
-  buildRealChart();
-  buildSkillMastery();
-  buildAnalyticsStats();
+async function autoLoadAnalytics() {
+  const data    = await fetchUserProfile();
+  const profile = data?.profile || {};
+  // sync course progress cache
+  if (profile.courseProgress) _courseProgressCache = profile.courseProgress;
+  buildRealChart(profile);
+  buildSkillMastery(profile);
+  buildAnalyticsStats(profile);
 }
 
-function buildRealChart() {
-  const bars      = document.getElementById("chartBars");
-  const labels    = document.getElementById("chartLabels");
+function buildRealChart(profile) {
+  const bars       = document.getElementById("chartBars");
+  const labels     = document.getElementById("chartLabels");
   const countBadge = document.getElementById("aQuizCount");
   if (!bars) return;
   bars.innerHTML = "";
   if (labels) labels.innerHTML = "";
 
-  const history = JSON.parse(localStorage.getItem("sr_quiz_history") || "[]");
+  const history = Array.isArray(profile?.quizHistory) ? profile.quizHistory : [];
   if (history.length === 0) {
     bars.innerHTML = `<div style="color:#8892b0;font-size:0.85rem;padding:20px 0;">No quiz data yet. Take a quiz first!</div>`;
     if (countBadge) countBadge.textContent = "0 quizzes";
@@ -480,7 +490,6 @@ function buildRealChart() {
     w.className = "bar-wrap";
     w.innerHTML = `<div class="bar-val">${q.pct}%</div><div class="bar" style="height:${Math.round((q.pct/max)*120)}px;background:${colors[i%colors.length]};opacity:.85;border-radius:4px 4px 0 0;"></div>`;
     bars.appendChild(w);
-
     if (labels) {
       const l = document.createElement("span");
       l.className = "chart-label";
@@ -492,26 +501,17 @@ function buildRealChart() {
   if (countBadge) countBadge.textContent = history.length + " quizzes";
 }
 
-function buildSkillMastery() {
+function buildSkillMastery(profile) {
   const list = document.getElementById("skillMasteryList");
   if (!list) return;
 
-  const courseProgress  = JSON.parse(localStorage.getItem("sr_course_progress") || "{}");
-  const completedSkills = JSON.parse(localStorage.getItem("sr_completed_roadmap") || "[]");
-  const quizHistory     = JSON.parse(localStorage.getItem("sr_quiz_history") || "[]");
+  const courseProgress   = typeof profile?.courseProgress === "object" && profile.courseProgress ? profile.courseProgress : {};
+  const completedSkills  = Array.isArray(profile?.completedSkills) ? profile.completedSkills : [];
+  const quizHistory      = Array.isArray(profile?.quizHistory) ? profile.quizHistory : [];
 
-  // Build skill map: roadmap completed steps + course progress + quiz topics
   const skillMap = {};
-
-  // From roadmap completed
   completedSkills.forEach(s => { skillMap[s] = Math.max(skillMap[s] || 0, 100); });
-
-  // From courses
-  Object.entries(courseProgress).forEach(([title, pct]) => {
-    skillMap[title] = Math.max(skillMap[title] || 0, pct);
-  });
-
-  // From quiz history — topics practiced
+  Object.entries(courseProgress).forEach(([title, pct]) => { skillMap[title] = Math.max(skillMap[title] || 0, pct); });
   quizHistory.forEach(q => {
     if (!skillMap[q.topic]) skillMap[q.topic] = Math.min(q.pct, 80);
     else skillMap[q.topic] = Math.max(skillMap[q.topic], Math.min(q.pct, 80));
@@ -521,93 +521,87 @@ function buildSkillMastery() {
     list.innerHTML = `<div style="color:#8892b0;font-size:0.85rem;">Complete roadmap steps or quizzes to see skill mastery.</div>`;
     return;
   }
-
   list.innerHTML = Object.entries(skillMap).map(([skill, pct]) => {
-    const fillClass = pct >= 90 ? "prog-fill--solid-accent" : pct >= 60 ? "prog-fill--primary" : pct >= 40 ? "prog-fill--solid-warn" : "prog-fill--solid-danger";
-    const valClass  = pct >= 90 ? "skill-mastery-val--accent" : pct >= 60 ? "skill-mastery-val--blue" : pct >= 40 ? "skill-mastery-val--warn" : "skill-mastery-val--danger";
+    const fillClass = pct>=90 ? "prog-fill--solid-accent" : pct>=60 ? "prog-fill--primary" : pct>=40 ? "prog-fill--solid-warn" : "prog-fill--solid-danger";
+    const valClass  = pct>=90 ? "skill-mastery-val--accent" : pct>=60 ? "skill-mastery-val--blue" : pct>=40 ? "skill-mastery-val--warn" : "skill-mastery-val--danger";
     return `<div class="prog-wrap"><div class="prog-row"><span>${skill}</span><span class="${valClass}">${pct}%</span></div><div class="prog-track"><div class="prog-fill ${fillClass}" style="width:${pct}%"></div></div></div>`;
   }).join("");
 }
 
-function buildAnalyticsStats() {
-  const history       = JSON.parse(localStorage.getItem("sr_quiz_history") || "[]");
-  const courseProgress = JSON.parse(localStorage.getItem("sr_course_progress") || "{}");
-  const completed     = JSON.parse(localStorage.getItem("sr_completed_roadmap") || "[]");
+function buildAnalyticsStats(profile) {
+  const history        = Array.isArray(profile?.quizHistory) ? profile.quizHistory : [];
+  const courseProgress = typeof profile?.courseProgress === "object" && profile.courseProgress ? profile.courseProgress : {};
+  const completed      = Array.isArray(profile?.completedSkills) ? profile.completedSkills : [];
 
-  // Quiz avg
-  const avgEl = document.getElementById("aQuizAvg");
-  const subEl = document.getElementById("aQuizSub");
+  const avgEl    = document.getElementById("aQuizAvg");
+  const subEl    = document.getElementById("aQuizSub");
+  const skillEl  = document.getElementById("aSkillScore");
+  const courseEl = document.getElementById("aCoursesDone");
+  const readEl   = document.getElementById("aReadiness");
+
   if (avgEl) {
     if (history.length > 0) {
-      const avg = Math.round(history.reduce((s,q) => s+q.pct, 0) / history.length);
+      const avg = Math.round(history.reduce((s,q)=>s+q.pct,0)/history.length);
       avgEl.textContent = avg + "%";
       if (subEl) subEl.textContent = history.length + " quizzes taken";
-    } else {
-      avgEl.textContent = "—";
-    }
+    } else { avgEl.textContent = "—"; if (subEl) subEl.textContent = "No quizzes yet"; }
   }
 
-  // Skill score = avg of completed roadmap steps (each = 100) + course progress
-  const skillEl = document.getElementById("aSkillScore");
   if (skillEl) {
-    const allScores = [
-      ...completed.map(() => 100),
-      ...Object.values(courseProgress)
-    ];
-    const skillAvg = allScores.length > 0 ? Math.round(allScores.reduce((a,b) => a+b,0) / allScores.length) : 0;
-    skillEl.textContent = skillAvg + "%";
+    const allScores = [...completed.map(()=>100), ...Object.values(courseProgress)];
+    skillEl.textContent = allScores.length > 0 ? Math.round(allScores.reduce((a,b)=>a+b,0)/allScores.length) + "%" : "0%";
   }
 
-  // Courses done
-  const courseEl = document.getElementById("aCoursesDone");
   if (courseEl) {
-    const done = Object.values(courseProgress).filter(v => v >= 100).length;
-    courseEl.textContent = done;
+    courseEl.textContent = Object.values(courseProgress).filter(v=>v>=100).length;
   }
 
-  // Readiness — weighted formula
-  const readinessEl = document.getElementById("aReadiness");
-  if (readinessEl) {
-    const quizAvg  = history.length > 0 ? history.reduce((s,q) => s+q.pct,0)/history.length : 0;
-    const roadPct  = completed.length > 0 ? Math.min(completed.length * 14, 100) : 0;
+  if (readEl) {
+    const quizAvg  = history.length > 0 ? history.reduce((s,q)=>s+q.pct,0)/history.length : 0;
+    const roadPct  = Math.min(completed.length * 14, 100);
     const cPct     = Object.values(courseProgress).filter(v=>v>=100).length * 20;
     const readiness = Math.min(Math.round(quizAvg*0.3 + roadPct*0.4 + cPct*0.3), 100);
-    readinessEl.textContent = readiness + "%";
-
-    // Update topbar pill
+    readEl.textContent = readiness + "%";
     const pill = document.querySelector(".ready-pill");
     if (pill) pill.innerHTML = `<div class="pulse"></div>${readiness}% Job Ready`;
   }
 }
 
 // ── GAMIFICATION ──
-const ALL_BADGES = [
-  { id:"first_quiz",     emoji:"🧠", name:"Quiz Starter",    desc:"Complete your first quiz",          check: () => JSON.parse(localStorage.getItem("sr_quiz_history")||"[]").length >= 1 },
-  { id:"quiz_master",    emoji:"⭐", name:"Quiz Master",     desc:"Score 90%+ on any quiz",            check: () => JSON.parse(localStorage.getItem("sr_quiz_history")||"[]").some(q=>q.pct>=90) },
-  { id:"first_roadmap",  emoji:"🗺️", name:"First Step",      desc:"Complete first roadmap step",       check: () => JSON.parse(localStorage.getItem("sr_completed_roadmap")||"[]").length >= 1 },
-  { id:"roadmap_half",   emoji:"🏃", name:"Halfway There",   desc:"Complete 3+ roadmap steps",         check: () => JSON.parse(localStorage.getItem("sr_completed_roadmap")||"[]").length >= 3 },
-  { id:"first_course",   emoji:"🎓", name:"Course Complete", desc:"Finish your first course",          check: () => Object.values(JSON.parse(localStorage.getItem("sr_course_progress")||"{}")).some(v=>v>=100) },
-  { id:"career_ready",   emoji:"🚀", name:"Career Ready",    desc:"Reach 50%+ job readiness",          check: () => {
-    const h = JSON.parse(localStorage.getItem("sr_quiz_history")||"[]");
-    const c = JSON.parse(localStorage.getItem("sr_completed_roadmap")||"[]");
-    const avg = h.length>0 ? h.reduce((s,q)=>s+q.pct,0)/h.length : 0;
-    return Math.round(avg*0.3 + Math.min(c.length*14,100)*0.4) >= 50;
-  }},
-];
+function getBadgeChecks(profile) {
+  const quizHistory    = Array.isArray(profile?.quizHistory)    ? profile.quizHistory    : [];
+  const completedSkills= Array.isArray(profile?.completedSkills)? profile.completedSkills: [];
+  const courseProgress = typeof profile?.courseProgress==="object"&&profile.courseProgress ? profile.courseProgress : {};
+  const quizAvg        = quizHistory.length>0 ? quizHistory.reduce((s,q)=>s+q.pct,0)/quizHistory.length : 0;
+  const roadPct        = Math.min(completedSkills.length*14,100);
+  const cDone          = Object.values(courseProgress).filter(v=>v>=100).length;
+  const readiness      = Math.min(Math.round(quizAvg*0.3 + roadPct*0.4 + cDone*20*0.3), 100);
 
-function autoLoadGamification() {
-  const xp    = calcXP();
+  return [
+    { emoji:"🧠", name:"Quiz Starter",    desc:"Complete your first quiz",      earned: quizHistory.length >= 1 },
+    { emoji:"⭐", name:"Quiz Master",     desc:"Score 90%+ on any quiz",        earned: quizHistory.some(q=>q.pct>=90) },
+    { emoji:"🗺️", name:"First Step",      desc:"Complete first roadmap step",   earned: completedSkills.length >= 1 },
+    { emoji:"🏃", name:"Halfway There",   desc:"Complete 3+ roadmap steps",     earned: completedSkills.length >= 3 },
+    { emoji:"🎓", name:"Course Complete", desc:"Finish your first course",      earned: cDone >= 1 },
+    { emoji:"🚀", name:"Career Ready",    desc:"Reach 50%+ job readiness",      earned: readiness >= 50 },
+  ];
+}
+
+async function autoLoadGamification() {
+  const data    = await fetchUserProfile();
+  const profile = data?.profile || {};
+  if (profile.courseProgress) _courseProgressCache = profile.courseProgress;
+
+  const xp    = calcXP(profile);
   const level = calcLevel(xp);
   const name  = LEVEL_NAMES[Math.min(level-1, LEVEL_NAMES.length-1)];
 
-  // XP to next level
   const nextThresh = LEVEL_THRESHOLDS[Math.min(level, LEVEL_THRESHOLDS.length-1)];
   const currThresh = LEVEL_THRESHOLDS[level-1];
   const xpInLevel  = xp - currThresh;
   const xpNeeded   = nextThresh - currThresh;
-  const pct        = Math.min(Math.round((xpInLevel / xpNeeded) * 100), 100);
+  const pct        = Math.min(Math.round((xpInLevel/xpNeeded)*100), 100);
 
-  // Update level UI
   const levelBadge  = document.getElementById("levelBadge");
   const levelNumber = document.getElementById("levelNumber");
   const levelLabel  = document.getElementById("levelLabel");
@@ -624,25 +618,21 @@ function autoLoadGamification() {
   if (totalXpEl)   totalXpEl.textContent   = xp.toLocaleString();
   if (yourXpEl)    yourXpEl.textContent    = `${xp.toLocaleString()} XP · #12`;
 
-  // Update sidebar level
   const sbLevel = document.querySelector(".u-lvl");
   if (sbLevel) sbLevel.textContent = `⭐ Level ${level} — ${name}`;
 
-  // Badges
-  const earned = ALL_BADGES.filter(b => b.check());
+  const badges     = getBadgeChecks(profile);
+  const earnedCount = badges.filter(b=>b.earned).length;
   const badgeGrid  = document.getElementById("badgeGrid");
   const badgeCount = document.getElementById("badgeCount");
-  if (badgeCount) badgeCount.textContent = `${earned.length} / ${ALL_BADGES.length}`;
-
+  if (badgeCount) badgeCount.textContent = `${earnedCount} / ${badges.length}`;
   if (badgeGrid) {
-    badgeGrid.innerHTML = ALL_BADGES.map(b => {
-      const isEarned = b.check();
-      return `<div class="badge-card${isEarned ? "" : " locked"}">
+    badgeGrid.innerHTML = badges.map(b => `
+      <div class="badge-card${b.earned ? "" : " locked"}">
         <div class="badge-emoji">${b.emoji}</div>
         <div class="badge-name">${b.name}</div>
         <div class="badge-desc">${b.desc}</div>
-      </div>`;
-    }).join("");
+      </div>`).join("");
   }
 }
 
@@ -725,8 +715,6 @@ async function markStepComplete(stepTitle, btnEl) {
     completed.push(stepTitle);
     profile.completedSkills = completed;
     await saveUserProfile(profile);
-    // Also save to localStorage for XP + analytics
-    localStorage.setItem("sr_completed_roadmap", JSON.stringify(completed));
     addXP(XP_PER_ROADMAP, "roadmap step");
   }
 
@@ -793,8 +781,6 @@ async function autoLoadRoadmap() {
   const data    = await fetchUserProfile();
   const profile = data?.profile;
   const completed = Array.isArray(profile?.completedSkills) ? profile.completedSkills : [];
-  // Sync to localStorage for XP + analytics
-  localStorage.setItem("sr_completed_roadmap", JSON.stringify(completed));
 
   renderSkillBadges(profile?.existingSkills || "", completed);
 
@@ -1156,11 +1142,18 @@ async function getProjectHint() {
 const COURSE_EMOJIS = ["⚛️","🔐","🐍","🏗️","🐳","📊","🤖","🌐","📱","🔧"];
 const COURSE_COLORS = ["react","purple","cyan","blue","accent","warn"];
 
+// course progress cached in memory per session
+let _courseProgressCache = null;
+
 function getCourseProgress() {
-  return JSON.parse(localStorage.getItem("sr_course_progress") || "{}");
+  return _courseProgressCache || {};
 }
-function saveCourseProgress(data) {
-  localStorage.setItem("sr_course_progress", JSON.stringify(data));
+async function saveCourseProgress(data) {
+  _courseProgressCache = data;
+  const profileData = await fetchUserProfile();
+  const profile = profileData?.profile || {};
+  profile.courseProgress = data;
+  await saveUserProfile(profile);
 }
 
 function renderCourseCards(courses) {
@@ -1205,11 +1198,11 @@ function renderCourseCards(courses) {
   renderCoursesProgress(courses);
 }
 
-function markCourseViewed(title, idx) {
+async function markCourseViewed(title, idx) {
   const progress = getCourseProgress();
   if (!progress[title]) progress[title] = 25;
   else if (progress[title] < 75) progress[title] += 25;
-  saveCourseProgress(progress);
+  await saveCourseProgress(progress);
   const pct = progress[title];
   const pctEl = document.getElementById("cpct-" + idx);
   const barEl = document.getElementById("cbar-" + idx);
@@ -1218,10 +1211,10 @@ function markCourseViewed(title, idx) {
   updateCourseDoneCount();
 }
 
-function markCourseDone(title, idx) {
+async function markCourseDone(title, idx) {
   const progress = getCourseProgress();
   progress[title] = 100;
-  saveCourseProgress(progress);
+  await saveCourseProgress(progress);
   const pctEl = document.getElementById("cpct-" + idx);
   const barEl = document.getElementById("cbar-" + idx);
   if (pctEl) pctEl.textContent = "100%";
@@ -1258,7 +1251,10 @@ function renderCoursesProgress(courses) {
 async function autoLoadCourses() {
   const grid = document.getElementById("courseCardsGrid");
   if (!grid) return;
-  if (grid.dataset.generated === "1") return;
+  // Always sync course progress from MongoDB
+  const data = await fetchUserProfile();
+  if (data?.profile?.courseProgress) _courseProgressCache = data.profile.courseProgress;
+  if (grid.dataset.generated === "1") { renderCoursesProgress(JSON.parse(localStorage.getItem("sr_courses_list")||"[]")); return; }
   await generateCourses();
 }
 
