@@ -1632,10 +1632,17 @@ Use REAL existing URLs only. YouTube videos must be real.` })
  
 // ── ONBOARDING ──
 async function checkOnboarding() {
+  // Use cache instantly so no form flash
+  const cached = localStorage.getItem("sr_profile_cache");
+  if (cached) {
+    applyProfileToUI(JSON.parse(cached), null);
+  }
+  // Still fetch from MongoDB in background
   const data = await fetchUserProfile();
   if (!data || !data.profile) {
-    showOnboarding();
+    if (!cached) showOnboarding(); // only show form if zero cache
   } else {
+    localStorage.setItem("sr_profile_cache", JSON.stringify(data.profile));
     applyProfileToUI(data.profile, data.stats);
   }
 }
