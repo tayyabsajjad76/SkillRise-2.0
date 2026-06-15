@@ -1778,6 +1778,152 @@ function applyProfileToUI(profile, stats) {
     }
   }
 }
+// ── RESUME: AUTO-LOAD FROM PROFILE ──
+// Call this when user navigates to resume page.
+// Already hooked into goto() below — just paste this whole block at bottom of dashboard.js
+
+async function autoLoadResume() {
+  const data    = await fetchUserProfile();
+  const profile = data?.profile || {};
+  const user    = (() => { try { return JSON.parse(localStorage.getItem("sr_current_user") || "null"); } catch { return null; } })();
+
+  // Fill name from logged-in user
+  const nameEl = document.getElementById("rv-name");
+  if (nameEl && !nameEl.value && user?.name) nameEl.value = user.name;
+
+  // Fill role from profile field
+  const roleEl = document.getElementById("rv-role");
+  if (roleEl && !roleEl.value && profile.field) roleEl.value = profile.field;
+
+  // Fill contact from user email + city if available
+  const contactEl = document.getElementById("rv-contact");
+  if (contactEl && !contactEl.value && user?.email) {
+    contactEl.value = user.email + (profile.city ? " · " + profile.city : "");
+  }
+
+  // Fill skills from existingSkills
+  const skillsEl = document.getElementById("rv-skills");
+  if (skillsEl && !skillsEl.value && profile.existingSkills) skillsEl.value = profile.existingSkills;
+
+  // Fill education from profile.education if stored, else leave blank for user
+  const eduEl = document.getElementById("rv-edu");
+  if (eduEl && !eduEl.value && profile.education) eduEl.value = profile.education;
+
+  // Fill projects from completedProjects → then completedSkills as fallback
+  const projEl = document.getElementById("rv-projects");
+  if (projEl && !projEl.value) {
+    const completedProjects = Array.isArray(profile.completedProjects) ? profile.completedProjects : [];
+    const completedSkills   = Array.isArray(profile.completedSkills)   ? profile.completedSkills   : [];
+    if (completedProjects.length > 0) {
+      projEl.value = completedProjects.map(p => p.title + (p.description ? " — " + p.description : "")).join("\n");
+    } else if (completedSkills.length > 0) {
+      projEl.value = completedSkills.map(s => s + " — completed via Skill Rise roadmap").join("\n");
+    }
+  }
+
+  // Build certifications from passed quizzes (≥70%)
+  const quizHistory = Array.isArray(profile.quizHistory) ? profile.quizHistory : [];
+  const passed = quizHistory.filter(q => q.pct >= 70).slice(-5);
+  const certSec = document.getElementById("p-cert-sec");
+  const certEl  = document.getElementById("p-certs");
+  if (passed.length > 0 && certEl) {
+    certEl.textContent = passed.map(q => "✅ " + q.topic).join(" · ");
+    if (certSec) certSec.style.display = "";
+  }
+
+  // Sync preview
+  updateResume();
+}
+
+// ── APPLY AI SUGGESTIONS → parse text → fill fields → update preview ──
+function applyAISuggestions() {
+  const sugBox = document.getElementById("aiResumeSuggestions");
+  if (!sugBox || !sugBox.textContent.trim()) {
+    alert("Run AI Improve Resume first to get suggestions!");
+    return;
+  }
+  const text = sugBox.textContent;
+
+  // Extract name (e.g. "Name: John Doe" or "**John Doe**")
+  const nameMatch = text.match(/(?:name|candidate)[:\s*]+([A-Z][a-z]+(?: [A-Z][a-z]+)+)/i);
+  if (nameMatch) document.getElementById("rv-name").value = nameMatch[1].trim();
+
+  // Extract role/title
+  const roleMatch = text.match(/(?:title|role|position|headline)[:\s*]+([^\n.]{5,80})/i);
+  if (roleMatch) document.getElementById("rv-role").value = roleMatch[1].replace(/\*+/g, "").trim();
+
+  // Extract skills line
+  const skillsMatch = text.match(/(?:skills?|technologies|tech stack)[:\s*]+([^\n]{10,300})/i);
+  if (skillsMatch) document.getElementById("rv-skills").value = skillsMatch[1].replace(/\*+/g, "").trim();
+
+  // Extract summary as role fallback
+  const summaryMatch = text.match(/(?:summary|objective|profile)[:\s*]+([^\n]{10,120})/i);
+  if (summaryMatch && !roleMatch) document.getElementById("rv-role").value = summaryMatch[1].replace(/\*+/g, "").trim();
+
+  // Update preview with whatever was filled/kept
+  updateResume();
+
+  // Visual feedback on btn
+  const btn = document.getElementById("applyAISuggestionsBtn");
+  if (btn) {
+    const orig = btn.textContent;
+    btn.textContent = "✅ Applied!";
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  }
+}
+
+// ── DOWNLOAD PDF via window.print() ──
+function downloadResumePDF() {
+  // Inject print CSS if not already present
+  if (!document.getElementById("resume-print-css")) {
+    const style = document.createElement("style");
+    style.id = "resume-print-css";
+    style.textContent = `
+      @media print {
+        body > *:not(#resumePreview) { display: none !important; }
+        * { visibility: hidden !important; }
+        #resumePreview, #resumePreview * { visibility: visible !important; }
+        #resumePreview {
+          position: fixed !important;
+          top: 0 !important; left: 0 !important;
+          width: 100vw !important;
+          background: #fff !important;
+          color: #000 !important;
+          padding: 40px !important;
+          font-size: 13px !important;
+          box-shadow: none !important;
+          border-radius: 0 !important;
+        }
+        #resumePreview .rv-name  { color: #1a56ff !important; font-size: 24px !important; font-weight: 700 !important; }
+        #resumePreview .rv-role  { color: #444 !important; font-size: 14px !important; margin-bottom: 4px !important; }
+        #resumePreview .rv-sec   { color: #1a56ff !important; border-bottom: 1px solid #1a56ff !important; font-weight: 600 !important; margin-top: 14px !important; }
+        #resumePreview .rv-contact, #resumePreview .rv-item { color: #333 !important; }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  window.print();
+}
+
+// ── HOOK autoLoadResume into goto() ──
+// Patch the existing goto function to call autoLoadResume when navigating to resume
+const _origGoto = goto;
+goto = function(id) {
+  _origGoto(id);
+  if (id === "resume") autoLoadResume();
+};
+
+// Also show/hide Apply AI Suggestions btn when suggestions box updates
+// Patch generateAIResume to show the btn after suggestions load
+const _origGenerateAIResume = generateAIResume;
+generateAIResume = async function() {
+  await _origGenerateAIResume();
+  const sugBox   = document.getElementById("aiResumeSuggestions");
+  const applyBtn = document.getElementById("applyAISuggestionsBtn");
+  if (sugBox && applyBtn && sugBox.textContent.trim()) {
+    applyBtn.style.display = "";
+  }
+};
 
 
 
