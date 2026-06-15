@@ -1872,37 +1872,51 @@ function applyAISuggestions() {
   }
 }
 
-// ── DOWNLOAD PDF via window.print() ──
 function downloadResumePDF() {
-  // Inject print CSS if not already present
-  if (!document.getElementById("resume-print-css")) {
-    const style = document.createElement("style");
-    style.id = "resume-print-css";
-    style.textContent = `
-      @media print {
-        body > *:not(#resumePreview) { display: none !important; }
-        * { visibility: hidden !important; }
-        #resumePreview, #resumePreview * { visibility: visible !important; }
-        #resumePreview {
-          position: fixed !important;
-          top: 0 !important; left: 0 !important;
-          width: 100vw !important;
-          background: #fff !important;
-          color: #000 !important;
-          padding: 40px !important;
-          font-size: 13px !important;
-          box-shadow: none !important;
-          border-radius: 0 !important;
-        }
-        #resumePreview .rv-name  { color: #1a56ff !important; font-size: 24px !important; font-weight: 700 !important; }
-        #resumePreview .rv-role  { color: #444 !important; font-size: 14px !important; margin-bottom: 4px !important; }
-        #resumePreview .rv-sec   { color: #1a56ff !important; border-bottom: 1px solid #1a56ff !important; font-weight: 600 !important; margin-top: 14px !important; }
-        #resumePreview .rv-contact, #resumePreview .rv-item { color: #333 !important; }
-      }
-    `;
-    document.head.appendChild(style);
-  }
-  window.print();
+  const preview = document.getElementById("resumePreview");
+  if (!preview) return;
+
+  const name    = document.getElementById("p-name")?.textContent    || "";
+  const role    = document.getElementById("p-role")?.textContent    || "";
+  const contact = document.getElementById("p-contact")?.textContent || "";
+  const skills  = document.getElementById("p-skills")?.textContent  || "";
+  const edu     = document.getElementById("p-edu")?.textContent     || "";
+  const projsHTML = document.getElementById("p-projects")?.innerHTML || "";
+  const certs   = document.getElementById("p-certs")?.textContent   || "";
+  const certSec = document.getElementById("p-cert-sec");
+  const showCerts = certSec && certSec.style.display !== "none" && certs;
+
+  const html = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${name} — Resume</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 750px; margin: 40px auto; color: #222; font-size: 13px; }
+  .rv-name { font-size: 26px; font-weight: 700; color: #1a56ff; }
+  .rv-role { font-size: 14px; color: #555; margin: 4px 0 8px; }
+  .rv-contact { font-size: 12px; color: #555; margin-bottom: 16px; }
+  .rv-sec { font-size: 11px; font-weight: 700; color: #1a56ff; text-transform: uppercase;
+            letter-spacing: 1px; border-bottom: 1.5px solid #1a56ff; padding-bottom: 3px;
+            margin: 16px 0 8px; }
+  .rv-item { font-size: 13px; color: #333; margin-bottom: 4px; line-height: 1.5; }
+  @media print { body { margin: 20px; } }
+</style>
+</head><body>
+  <div class="rv-name">${name}</div>
+  <div class="rv-role">${role}</div>
+  <div class="rv-contact">${contact}</div>
+  <div class="rv-sec">Skills</div>
+  <div class="rv-item">${skills}</div>
+  <div class="rv-sec">Education</div>
+  <div class="rv-item">${edu}</div>
+  <div class="rv-sec">Projects</div>
+  <div>${projsHTML}</div>
+  ${showCerts ? `<div class="rv-sec">Certifications</div><div class="rv-item">${certs}</div>` : ""}
+</body></html>`;
+
+  const win = window.open("", "_blank");
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => { win.print(); }, 400);
 }
 
 // ── HOOK autoLoadResume into goto() ──
