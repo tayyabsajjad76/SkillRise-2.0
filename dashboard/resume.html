@@ -2,47 +2,279 @@
 <div class="section-page" id="page-resume">
   <div class="sec-label">AI Resume Builder</div>
   <div class="sec-title">Build Your Professional CV</div>
-  <div class="sec-desc">AI fills your resume based on your platform activity. Edit and download as PDF.</div>
+  <div class="sec-desc">Fill in your details below, click AI Improve for suggestions, then Update Preview.</div>
+
+  <!-- Print-only style: only show resume preview when printing -->
+  <style>
+    @media print {
+      body > *:not(#resume-print-wrapper) { display: none !important; }
+      #resume-print-wrapper { display: block !important; position: fixed; top: 0; left: 0; width: 100%; }
+      #resumePreview { box-shadow: none !important; margin: 0 !important; border: none !important; }
+    }
+  </style>
+
   <div class="row2">
+    <!-- LEFT: Edit Form -->
     <div class="full-card">
-      <div class="card-title-row"><h3>Edit Your Details</h3><button class="btn btn-accent btn-sm" id="resumeUpdateBtn"><i class="fa-solid fa-wand-magic-sparkles"></i>Update</button></div>
-      <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="rv-name" value="Tayyab Sajjad" /></div>
-      <div class="form-group"><label class="form-label">Role / Title</label><input class="form-input" id="rv-role" value="Full Stack Developer" /></div>
-      <div class="form-group"><label class="form-label">Contact Info</label><input class="form-input" id="rv-contact" value="tayyab@email.com · linkedin.com/in/tayyab · Lahore, PK" /></div>
-      <div class="form-group"><label class="form-label">Skills</label><input class="form-input" id="rv-skills" value="JavaScript, React.js, Node.js, MongoDB, Express, HTML/CSS, Git" /></div>
-      <div class="form-group"><label class="form-label">Education</label><input class="form-input" id="rv-edu" value="BS Computer Science — UET Lahore (2022–2026)" /></div>
-      <div class="form-group">
-        <label class="form-label">Projects (one per line)</label>
-        <textarea class="form-textarea" id="rv-projects" rows="3">Skill Rise 2.0 — AI student platform (React + Node.js)
-REST API Task Manager — Node.js + MongoDB + JWT
-Portfolio Website — HTML/CSS/JS with animations</textarea>
+      <div class="card-title-row">
+        <h3>Edit Your Details</h3>
+        <button class="btn btn-accent btn-sm" id="resumeUpdateBtn">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>Update Preview
+        </button>
       </div>
-      <button class="btn btn-primary" id="resumePreviewBtn"><i class="fa-solid fa-rotate"></i>Update Preview</button>
+
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-input" id="rv-name" placeholder="e.g. Ahmed Khan" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role / Title</label>
+        <input class="form-input" id="rv-role" placeholder="e.g. Full Stack Developer" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Info</label>
+        <input class="form-input" id="rv-contact" placeholder="email · linkedin · city, country" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Skills</label>
+        <input class="form-input" id="rv-skills" placeholder="e.g. JavaScript, React, Node.js, MongoDB" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Education</label>
+        <input class="form-input" id="rv-edu" placeholder="e.g. BS Computer Science — UET Lahore (2022–2026)" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Projects (one per line, use — to separate title from description)</label>
+        <textarea class="form-textarea" id="rv-projects" rows="4" placeholder="Project Name — short description&#10;Another Project — description"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Certifications (comma separated)</label>
+        <input class="form-input" id="rv-certs" placeholder="e.g. React Fundamentals, AWS Cloud Practitioner" />
+      </div>
+
+      <button class="btn btn-primary" id="resumePreviewBtn">
+        <i class="fa-solid fa-rotate"></i>Update Preview
+      </button>
+
       <button class="btn btn-accent" id="aiResumeBtn" onclick="generateAIResume()" style="margin-top:10px;width:100%;">
-  🤖 AI Improve Resume
-</button>
-<div id="aiResumeSuggestions" style="display:none; margin-top:16px; background:rgba(255,255,255,0.05); border:1px solid #a78bfa; border-radius:10px; padding:16px; color:#e2e8f0; white-space:pre-wrap; font-size:0.9rem;">
-</div>
+        🤖 AI Improve Resume
+      </button>
+
+      <!-- AI suggestions box — also has "Apply to Form" button -->
+      <div id="aiResumeSuggestions" style="display:none; margin-top:16px; background:rgba(255,255,255,0.05); border:1px solid #a78bfa; border-radius:10px; padding:16px; color:#e2e8f0; white-space:pre-wrap; font-size:0.9rem;"></div>
+
+      <button id="applyAISuggestionsBtn" style="display:none; margin-top:10px; width:100%;" class="btn btn-outline">
+        ✨ Apply AI Suggestions to Fields
+      </button>
     </div>
+
+    <!-- RIGHT: Preview -->
     <div class="full-card">
-      <div class="card-title-row"><h3>Live CV Preview</h3><button class="btn btn-outline btn-sm"><i class="fa-solid fa-download"></i>Download PDF</button></div>
+      <div class="card-title-row">
+        <h3>Live CV Preview</h3>
+        <button class="btn btn-outline btn-sm" id="downloadPdfBtn" onclick="downloadResumeAsPDF()">
+          <i class="fa-solid fa-download"></i>Download PDF
+        </button>
+      </div>
+
       <div class="resume-preview" id="resumePreview">
-        <div class="rv-name" id="p-name">Tayyab Sajjad</div>
-        <div class="rv-role" id="p-role">Full Stack Developer</div>
-        <div class="rv-contact" id="p-contact">📧 tayyab@email.com · 🔗 linkedin.com/in/tayyab · 📍 Lahore, PK</div>
-        <div class="rv-sec">Skills</div>
-        <div class="rv-item" id="p-skills">JavaScript, React.js, Node.js, MongoDB, Express, HTML/CSS, Git</div>
-        <div class="rv-sec">Education</div>
-        <div class="rv-item" id="p-edu">BS Computer Science — UET Lahore (2022–2026)</div>
-        <div class="rv-sec">Projects</div>
-        <div id="p-projects">
-          <div class="rv-item">• <strong>Skill Rise 2.0</strong> — AI student platform (React + Node.js)</div>
-          <div class="rv-item">• <strong>REST API Task Manager</strong> — Node.js + MongoDB + JWT</div>
-          <div class="rv-item">• <strong>Portfolio Website</strong> — HTML/CSS/JS with animations</div>
-        </div>
-        <div class="rv-sec">Certifications</div>
-        <div class="rv-item">✅ Full Stack Development &nbsp;·&nbsp; ✅ React Fundamentals &nbsp;·&nbsp; ✅ JavaScript Advanced</div>
+        <div class="rv-name" id="p-name" style="color:#1a56ff;font-size:1.5rem;font-weight:700;">Your Name</div>
+        <div class="rv-role" id="p-role" style="color:#555;font-size:1rem;margin-bottom:4px;">Your Role</div>
+        <div class="rv-contact" id="p-contact" style="font-size:0.82rem;color:#666;margin-bottom:10px;"></div>
+
+        <div class="rv-sec" style="color:#1a56ff;font-size:0.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-bottom:1.5px solid #1a56ff;padding-bottom:2px;margin:10px 0 6px;">Skills</div>
+        <div class="rv-item" id="p-skills" style="font-size:0.85rem;color:#333;"></div>
+
+        <div class="rv-sec" style="color:#1a56ff;font-size:0.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-bottom:1.5px solid #1a56ff;padding-bottom:2px;margin:10px 0 6px;">Education</div>
+        <div class="rv-item" id="p-edu" style="font-size:0.85rem;color:#333;"></div>
+
+        <div class="rv-sec" style="color:#1a56ff;font-size:0.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-bottom:1.5px solid #1a56ff;padding-bottom:2px;margin:10px 0 6px;">Projects</div>
+        <div id="p-projects" style="font-size:0.85rem;color:#333;"></div>
+
+        <div class="rv-sec" id="certs-section" style="color:#1a56ff;font-size:0.7rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-bottom:1.5px solid #1a56ff;padding-bottom:2px;margin:10px 0 6px;">Certifications</div>
+        <div class="rv-item" id="p-certs" style="font-size:0.85rem;color:#333;"></div>
       </div>
     </div>
   </div>
 </div>
+
+<script>
+// ── OVERRIDE updateResume to use user-entered data only ──
+function updateResume() {
+  const name    = document.getElementById("rv-name")?.value.trim()    || "";
+  const role    = document.getElementById("rv-role")?.value.trim()    || "";
+  const contact = document.getElementById("rv-contact")?.value.trim() || "";
+  const skills  = document.getElementById("rv-skills")?.value.trim()  || "";
+  const edu     = document.getElementById("rv-edu")?.value.trim()     || "";
+  const certs   = document.getElementById("rv-certs")?.value.trim()   || "";
+  const projects= document.getElementById("rv-projects")?.value || "";
+
+  document.getElementById("p-name").textContent    = name    || "Your Name";
+  document.getElementById("p-role").textContent    = role    || "Your Role";
+  document.getElementById("p-contact").textContent = contact ? "📧 " + contact : "";
+  document.getElementById("p-skills").textContent  = skills  || "";
+  document.getElementById("p-edu").textContent     = edu     || "";
+
+  // projects
+  const projs = projects.split("\n").filter(l => l.trim());
+  document.getElementById("p-projects").innerHTML = projs.map(p => {
+    const pts = p.split("—");
+    return `<div class="rv-item" style="font-size:0.85rem;color:#333;">• <strong>${pts[0].trim()}</strong>${pts[1] ? " — " + pts[1].trim() : ""}</div>`;
+  }).join("");
+
+  // certifications
+  const certSection = document.getElementById("certs-section");
+  const certsEl = document.getElementById("p-certs");
+  if (certs) {
+    certsEl.textContent = certs.split(",").map(c => "✅ " + c.trim()).join("  ·  ");
+    if (certSection) certSection.style.display = "";
+  } else {
+    certsEl.textContent = "";
+    if (certSection) certSection.style.display = "none";
+  }
+}
+
+// ── DOWNLOAD PDF via print ──
+function downloadResumeAsPDF() {
+  const preview = document.getElementById("resumePreview");
+  if (!preview) return;
+
+  // Open new window with just the resume HTML
+  const printWin = window.open("", "_blank");
+  printWin.document.write(`
+    <!DOCTYPE html><html><head>
+    <meta charset="UTF-8">
+    <title>Resume</title>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; padding: 32px 40px; color:#222; background:#fff; }
+      .rv-name { font-size:1.6rem; font-weight:700; color:#1a56ff; }
+      .rv-role { font-size:1rem; color:#555; margin-top:2px; }
+      .rv-contact { font-size:0.82rem; color:#666; margin:6px 0 12px; }
+      .rv-sec { font-size:0.7rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+                color:#1a56ff; border-bottom:1.5px solid #1a56ff; padding-bottom:2px; margin:12px 0 6px; }
+      .rv-item { font-size:0.85rem; color:#333; line-height:1.6; margin-bottom:3px; }
+    </style>
+    </head><body>
+    ${preview.innerHTML}
+    </body></html>
+  `);
+  printWin.document.close();
+  printWin.focus();
+  setTimeout(() => { printWin.print(); }, 400);
+}
+
+// ── OVERRIDE generateAIResume to show Apply button after ──
+const _origGenerateAIResume = window.generateAIResume;
+window.generateAIResume = async function() {
+  const btn    = document.getElementById("aiResumeBtn");
+  const output = document.getElementById("aiResumeSuggestions");
+  const applyBtn = document.getElementById("applyAISuggestionsBtn");
+  if (!btn || !output) return;
+
+  const name     = document.getElementById("rv-name")?.value     || "";
+  const role     = document.getElementById("rv-role")?.value     || "";
+  const skills   = document.getElementById("rv-skills")?.value   || "";
+  const edu      = document.getElementById("rv-edu")?.value      || "";
+  const projects = document.getElementById("rv-projects")?.value || "";
+  const certs    = document.getElementById("rv-certs")?.value    || "";
+
+  if (!name && !role && !skills) {
+    alert("Please fill in at least your name, role, and skills first!");
+    return;
+  }
+
+  btn.textContent = "⏳ Analyzing..."; btn.disabled = true;
+  if (applyBtn) applyBtn.style.display = "none";
+
+  const API = "https://skillrise-api.onrender.com";
+  try {
+    const res  = await fetch(`${API}/api/chat`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message: `Review this student resume and give improvement suggestions. Also provide IMPROVED VERSIONS of each field clearly labeled. Format your response with these sections:
+
+ANALYSIS:
+[Your overall assessment]
+
+IMPROVED NAME: [improved name or same if fine]
+IMPROVED ROLE: [better job title]
+IMPROVED SKILLS: [reordered/enhanced skills list]
+IMPROVED EDUCATION: [improved education line]
+IMPROVED PROJECTS:
+[improved project 1 — description]
+[improved project 2 — description]
+IMPROVED CERTIFICATIONS: [cert1, cert2]
+
+TIPS:
+[bullet point tips]
+
+Resume data:
+Name: ${name}
+Role: ${role}
+Skills: ${skills}
+Education: ${edu}
+Projects: ${projects}
+Certifications: ${certs}` }),
+    });
+    const data = await res.json();
+    output.style.display = "block";
+    output.textContent = data.reply;
+    // Store AI reply for apply button
+    output.dataset.aiReply = data.reply;
+    if (applyBtn) applyBtn.style.display = "block";
+  } catch (err) {
+    output.style.display = "block";
+    output.textContent = "❌ Could not analyze resume. Please try again.";
+  }
+  btn.textContent = "🤖 AI Improve Resume"; btn.disabled = false;
+};
+
+// ── APPLY AI SUGGESTIONS TO FORM FIELDS ──
+document.getElementById("applyAISuggestionsBtn")?.addEventListener("click", function() {
+  const output = document.getElementById("aiResumeSuggestions");
+  const reply  = output?.dataset.aiReply || output?.textContent || "";
+  if (!reply) return;
+
+  function extract(label) {
+    const regex = new RegExp(label + "[:\\s]+([^\\n]+)", "i");
+    const m = reply.match(regex);
+    return m ? m[1].trim() : null;
+  }
+
+  function extractBlock(label, nextLabel) {
+    const regex = new RegExp(label + "[:\\s]*\\n([\\s\\S]+?)(?=\\n[A-Z ]+:|$)", "i");
+    const m = reply.match(regex);
+    return m ? m[1].trim() : null;
+  }
+
+  const name  = extract("IMPROVED NAME");
+  const role  = extract("IMPROVED ROLE");
+  const skills= extract("IMPROVED SKILLS");
+  const edu   = extract("IMPROVED EDUCATION");
+  const certs = extract("IMPROVED CERTIFICATIONS");
+  const projs = extractBlock("IMPROVED PROJECTS", "IMPROVED CERTIFICATIONS");
+
+  if (name)   document.getElementById("rv-name").value    = name;
+  if (role)   document.getElementById("rv-role").value    = role;
+  if (skills) document.getElementById("rv-skills").value  = skills;
+  if (edu)    document.getElementById("rv-edu").value     = edu;
+  if (certs)  document.getElementById("rv-certs").value   = certs;
+  if (projs)  document.getElementById("rv-projects").value= projs;
+
+  updateResume();
+
+  this.textContent = "✅ Applied!";
+  setTimeout(() => { this.textContent = "✨ Apply AI Suggestions to Fields"; }, 2000);
+});
+
+// Hide certs section on init
+document.addEventListener("DOMContentLoaded", () => {
+  const cs = document.getElementById("certs-section");
+  if (cs) cs.style.display = "none";
+});
+// Also run immediately (in case DOM already ready)
+(function() {
+  const cs = document.getElementById("certs-section");
+  if (cs) cs.style.display = "none";
+})();
+</script>
