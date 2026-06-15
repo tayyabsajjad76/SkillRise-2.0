@@ -1632,10 +1632,24 @@ Use REAL existing URLs only. YouTube videos must be real.` })
  
 // ── ONBOARDING ──
 async function checkOnboarding() {
+  // Check localStorage first (instant, no API delay)
+  const cached = localStorage.getItem("sr_user_profile");
+  if (cached) {
+    try {
+      const profile = JSON.parse(cached);
+      if (profile && profile.field) {
+        const data = await fetchUserProfile();
+        applyProfileToUI(profile, data?.stats || null);
+        return;
+      }
+    } catch(e) {}
+  }
+  // Fallback: check MongoDB
   const data = await fetchUserProfile();
   if (!data || !data.profile) {
     showOnboarding();
   } else {
+    localStorage.setItem("sr_user_profile", JSON.stringify(data.profile));
     applyProfileToUI(data.profile, data.stats);
   }
 }
@@ -1662,8 +1676,9 @@ async function submitOnboarding() {
  
   const profile = { field, level, hours: parseInt(hours), goal, existingSkills: skills, createdAt: new Date().toISOString() };
  
-  // Save profile to MongoDB
+  // Save profile to MongoDB + cache locally
   await saveUserProfile(profile);
+  localStorage.setItem("sr_user_profile", JSON.stringify(profile));
  
   // Init stats
   const stats = { streak: 1, quizAvg: 0, roadmapPct: 0, projectsDone: 0, readiness: 10, lastActive: new Date().toISOString() };
@@ -2157,6 +2172,7 @@ function applyProfileToUI(profile, stats) {
 //   await saveUserProfile(profile);
 //   loadQuizStatsFromProfile(profile);
 //   addXP(XP_PER_QUIZ, "quiz");
+//   applyProfileToUI(profile, profileData?.stats || null);
 // }
  
 // // ── AI RESUME HELPER ──
@@ -2505,6 +2521,7 @@ function applyProfileToUI(profile, stats) {
 //   const pct = totalSteps > 0 ? Math.round((completed.length / totalSteps) * 100) : 0;
 //   const roadmapBadge = document.querySelector(".nav-item[data-page='roadmap'] .nav-badge");
 //   if (roadmapBadge) roadmapBadge.textContent = pct + "%";
+//   applyProfileToUI(profile, data?.stats || null);
 // }
  
 // function renderRoadmapCards(text, stepsContainer, countBadge, completedSkills) {
@@ -3122,6 +3139,7 @@ function applyProfileToUI(profile, stats) {
 //       prof.currentProject = parsed;
 //       await saveUserProfile(prof);
 //       renderCurrentProject(parsed);
+//       applyProfileToUI(prof, pd?.stats || null);
 //     } else { if (titleEl) titleEl.textContent = "❌ Could not generate. Try again."; }
 //   } catch { if (titleEl) titleEl.textContent = "❌ Error generating project. Try again."; }
 //   if (btn) { btn.disabled = false; btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i>New Project`; }
@@ -3210,6 +3228,8 @@ function applyProfileToUI(profile, stats) {
 //   if (barEl) barEl.style.width = "100%";
 //   updateCourseDoneCount();
 //   addXP(XP_PER_COURSE, "course");
+//   const pd = await fetchUserProfile();
+//   if (pd?.profile) applyProfileToUI(pd.profile, pd?.stats || null);
 // }
  
 // function updateCourseDoneCount() {
@@ -3542,3 +3562,13 @@ function applyProfileToUI(profile, stats) {
 //     }
 //   }
 // }
+
+
+
+
+
+
+
+
+
+
