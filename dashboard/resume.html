@@ -6,42 +6,38 @@
   <div class="row2">
     <div class="full-card">
       <div class="card-title-row"><h3>Edit Your Details</h3><button class="btn btn-accent btn-sm" id="resumeUpdateBtn"><i class="fa-solid fa-wand-magic-sparkles"></i>Update</button></div>
-      <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="rv-name" value="Tayyab Sajjad" /></div>
-      <div class="form-group"><label class="form-label">Role / Title</label><input class="form-input" id="rv-role" value="Full Stack Developer" /></div>
-      <div class="form-group"><label class="form-label">Contact Info</label><input class="form-input" id="rv-contact" value="tayyab@email.com · linkedin.com/in/tayyab · Lahore, PK" /></div>
-      <div class="form-group"><label class="form-label">Skills</label><input class="form-input" id="rv-skills" value="JavaScript, React.js, Node.js, MongoDB, Express, HTML/CSS, Git" /></div>
-      <div class="form-group"><label class="form-label">Education</label><input class="form-input" id="rv-edu" value="BS Computer Science — UET Lahore (2022–2026)" /></div>
+      <div class="form-group"><label class="form-label">Full Name</label><input class="form-input" id="rv-name" value="" placeholder="Your full name" /></div>
+      <div class="form-group"><label class="form-label">Role / Title</label><input class="form-input" id="rv-role" value="" placeholder="e.g. Full Stack Developer" /></div>
+      <div class="form-group"><label class="form-label">Contact Info</label><input class="form-input" id="rv-contact" value="" placeholder="email · linkedin · city" /></div>
+      <div class="form-group"><label class="form-label">Skills</label><input class="form-input" id="rv-skills" value="" placeholder="e.g. JavaScript, React.js, Node.js" /></div>
+      <div class="form-group"><label class="form-label">Education</label><input class="form-input" id="rv-edu" value="" placeholder="e.g. BS Computer Science — UET Lahore (2022–2026)" /></div>
       <div class="form-group">
         <label class="form-label">Projects (one per line)</label>
-        <textarea class="form-textarea" id="rv-projects" rows="3">Skill Rise 2.0 — AI student platform (React + Node.js)
-REST API Task Manager — Node.js + MongoDB + JWT
-Portfolio Website — HTML/CSS/JS with animations</textarea>
+        <textarea class="form-textarea" id="rv-projects" rows="3" placeholder="Project Name — brief description"></textarea>
       </div>
       <button class="btn btn-primary" id="resumePreviewBtn"><i class="fa-solid fa-rotate"></i>Update Preview</button>
+      <button class="btn btn-outline" id="applyAISuggestionsBtn" onclick="applyAISuggestions()" style="margin-top:10px;width:100%;display:none;">
+        ✨ Apply AI Suggestions
+      </button>
       <button class="btn btn-accent" id="aiResumeBtn" onclick="generateAIResume()" style="margin-top:10px;width:100%;">
-  🤖 AI Improve Resume
-</button>
-<div id="aiResumeSuggestions" style="display:none; margin-top:16px; background:rgba(255,255,255,0.05); border:1px solid #a78bfa; border-radius:10px; padding:16px; color:#e2e8f0; white-space:pre-wrap; font-size:0.9rem;">
-</div>
+        🤖 AI Improve Resume
+      </button>
+      <div id="aiResumeSuggestions" style="display:none; margin-top:16px; background:rgba(255,255,255,0.05); border:1px solid #a78bfa; border-radius:10px; padding:16px; color:#e2e8f0; white-space:pre-wrap; font-size:0.9rem;"></div>
     </div>
     <div class="full-card">
-      <div class="card-title-row"><h3>Live CV Preview</h3><button class="btn btn-outline btn-sm"><i class="fa-solid fa-download"></i>Download PDF</button></div>
+      <div class="card-title-row"><h3>Live CV Preview</h3><button class="btn btn-outline btn-sm" onclick="downloadResumePDF()"><i class="fa-solid fa-download"></i>Download PDF</button></div>
       <div class="resume-preview" id="resumePreview">
-        <div class="rv-name" id="p-name">Tayyab Sajjad</div>
-        <div class="rv-role" id="p-role">Full Stack Developer</div>
-        <div class="rv-contact" id="p-contact">📧 tayyab@email.com · 🔗 linkedin.com/in/tayyab · 📍 Lahore, PK</div>
+        <div class="rv-name" id="p-name"></div>
+        <div class="rv-role" id="p-role"></div>
+        <div class="rv-contact" id="p-contact"></div>
         <div class="rv-sec">Skills</div>
-        <div class="rv-item" id="p-skills">JavaScript, React.js, Node.js, MongoDB, Express, HTML/CSS, Git</div>
+        <div class="rv-item" id="p-skills"></div>
         <div class="rv-sec">Education</div>
-        <div class="rv-item" id="p-edu">BS Computer Science — UET Lahore (2022–2026)</div>
+        <div class="rv-item" id="p-edu"></div>
         <div class="rv-sec">Projects</div>
-        <div id="p-projects">
-          <div class="rv-item">• <strong>Skill Rise 2.0</strong> — AI student platform (React + Node.js)</div>
-          <div class="rv-item">• <strong>REST API Task Manager</strong> — Node.js + MongoDB + JWT</div>
-          <div class="rv-item">• <strong>Portfolio Website</strong> — HTML/CSS/JS with animations</div>
-        </div>
-        <div class="rv-sec">Certifications</div>
-        <div class="rv-item">✅ Full Stack Development &nbsp;·&nbsp; ✅ React Fundamentals &nbsp;·&nbsp; ✅ JavaScript Advanced</div>
+        <div id="p-projects"></div>
+        <div class="rv-sec" id="p-cert-sec" style="display:none;">Certifications</div>
+        <div class="rv-item" id="p-certs"></div>
       </div>
     </div>
   </div>
