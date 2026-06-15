@@ -1681,8 +1681,11 @@ Generate a motivating 2-sentence welcome message and their top 3 immediate actio
   } catch(e) {}
  
   // Close modal, apply to UI
-  document.getElementById("onboardingOverlay").style.display = "none";
-  applyProfileToUI(profile, stats);
+  // document.getElementById("onboardingOverlay").style.display = "none";
+  // applyProfileToUI(profile, stats);
+ document.getElementById("onboardingOverlay").style.display = "none";
+localStorage.setItem("sr_profile_cache", JSON.stringify(profile)); // ← ADD THIS
+applyProfileToUI(profile, stats);
   btn.disabled = false;
   if (loading) loading.style.display = "none";
 }
