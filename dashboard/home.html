@@ -3,36 +3,21 @@
   <div class="home-hero">
     <div class="home-hero-glow"></div>
     <h2>Welcome back, <span id="heroUserName">there</span>! 👋</h2>
-    <p id="heroSubtext">Loading your learning summary...</p>
+    <p>3 tasks pending today. Interview readiness jumped 5% this week!</p>
     <div class="home-hero-btns">
       <button class="btn btn-accent" onclick="goto('planner')"><i class="fa-solid fa-calendar-check"></i>Today's Tasks</button>
       <button class="btn btn-outline" onclick="goto('interview')"><i class="fa-solid fa-microphone"></i>Mock Interview</button>
     </div>
   </div>
   <div class="stats-grid">
-    <div class="stat-card"><div class="s-lbl">Readiness Score</div><div class="s-val s-val--accent" id="homeReadiness">—</div><div class="s-sub"><span class="s-up" id="homeReadinessSub">Calculating...</span></div></div>
-    <div class="stat-card"><div class="s-lbl">Day Streak</div><div class="s-val s-val--warn" id="homeStreak">—</div><div class="s-sub">Keep it up!</div></div>
-    <div class="stat-card"><div class="s-lbl">Quiz Average</div><div class="s-val s-val--blue" id="homeQuizAvg">—</div><div class="s-sub" id="homeQuizSub">No quizzes yet</div></div>
-    <div class="stat-card"><div class="s-lbl">Projects Done</div><div class="s-val s-val--purple" id="homeProjectsDone">0</div><div class="s-sub" id="homeProjectSub">Start your first project</div></div>
+    <div class="stat-card"><div class="s-lbl">Readiness Score</div><div class="s-val s-val--accent">87%</div><div class="s-sub"><span class="s-up">↑5%</span> this week</div></div>
+    <div class="stat-card"><div class="s-lbl">Day Streak</div><div class="s-val s-val--warn">14 🔥</div><div class="s-sub">Keep it up!</div></div>
+    <div class="stat-card"><div class="s-lbl">Quiz Average</div><div class="s-val s-val--blue">78%</div><div class="s-sub"><span class="s-up">↑12%</span> last week</div></div>
+    <div class="stat-card"><div class="s-lbl">Projects Done</div><div class="s-val s-val--purple">12</div><div class="s-sub">Next due in 3 days</div></div>
   </div>
   <div class="cards-grid">
-    <div class="card" onclick="goto('roadmap')">
-      <div class="card-icon">🗺️</div>
-      <h4>Learning Roadmap</h4>
-      <p id="homeRoadmapText">Loading roadmap...</p>
-      <div class="prog-wrap"><div class="prog-track"><div class="prog-fill prog-fill--primary" id="homeRoadmapBar" style="width:0%"></div></div></div>
-    </div>
-    <div class="card" onclick="goto('quiz')">
-      <div class="card-icon">📝</div>
-      <h4>Weekly Quiz</h4>
-      <p id="homeQuizText">Loading quiz info...</p>
-      <div><span class="badge badge-orange" id="homeQuizBadge">Take a quiz</span></div>
-    </div>
-    <div class="card" onclick="goto('projects')">
-      <div class="card-icon">🔨</div>
-      <h4>Active Project</h4>
-      <p id="homeProjectText">Loading project...</p>
-      <div class="prog-wrap"><div class="prog-track"><div class="prog-fill prog-fill--warn" id="homeProjectBar" style="width:0%"></div></div></div>
-    </div>
+    <div class="card" onclick="goto('roadmap')"><div class="card-icon">🗺️</div><h4>Learning Roadmap</h4><p>68% complete — 3 milestones left</p><div class="prog-wrap"><div class="prog-track"><div class="prog-fill prog-fill--primary" data-w="68"></div></div></div></div>
+    <div class="card" onclick="goto('quiz')"><div class="card-icon">📝</div><h4>Weekly Quiz</h4><p>JavaScript async/await · 15 questions</p><div><span class="badge badge-orange">Due in 2 days</span></div></div>
+    <div class="card" onclick="goto('projects')"><div class="card-icon">🔨</div><h4>Active Project</h4><p>REST API with Node.js — 40% done</p><div class="prog-wrap"><div class="prog-track"><div class="prog-fill prog-fill--warn" data-w="40"></div></div></div></div>
   </div>
 </div>
