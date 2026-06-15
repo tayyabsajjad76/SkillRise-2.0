@@ -1681,47 +1681,137 @@ Generate a motivating 2-sentence welcome message and their top 3 immediate actio
   btn.disabled = false;
   if (loading) loading.style.display = "none";
 }
- 
+
 function applyProfileToUI(profile, stats) {
   if (!profile) return;
   const s = stats || {};
- 
-  // Update topbar readiness pill
-  const readiness = s.readiness || 10;
+
+  // ── COMPUTE REAL DATA ──
+  const quizHistory     = Array.isArray(profile.quizHistory)     ? profile.quizHistory     : [];
+  const completedSkills = Array.isArray(profile.completedSkills) ? profile.completedSkills : [];
+  const courseProgress  = (typeof profile.courseProgress === "object" && profile.courseProgress) ? profile.courseProgress : {};
+  const completedProjects = Array.isArray(profile.completedProjects) ? profile.completedProjects : [];
+
+  const quizAvg    = quizHistory.length > 0 ? Math.round(quizHistory.reduce((a,b) => a+b.pct, 0) / quizHistory.length) : 0;
+  const roadmapPct = Math.min(completedSkills.length * 14, 100);
+  const cDone      = Object.values(courseProgress).filter(v => v >= 100).length;
+  const readiness  = Math.min(Math.round(quizAvg*0.3 + roadmapPct*0.4 + cDone*20*0.3), 100) || s.readiness || 10;
+  const streak     = s.streak || 1;
+
+  // ── TOPBAR PILL ──
   const pill = document.querySelector(".ready-pill");
   if (pill) pill.innerHTML = `<div class="pulse"></div>${readiness}% Job Ready`;
- 
-  // Update streak in sidebar
+
+  // ── SIDEBAR STREAK ──
   const streakVal = document.querySelector(".streak-val");
-  if (streakVal) streakVal.textContent = (s.streak || 1) + " days";
- 
-  // Update home stats cards
-  const statVals = document.querySelectorAll(".s-val");
-  if (statVals[0]) statVals[0].textContent = readiness + "%";
-  if (statVals[1]) statVals[1].textContent = (s.streak || 1) + " 🔥";
-  if (statVals[2]) statVals[2].textContent = (s.quizAvg || 0) + "%";
-  if (statVals[3]) statVals[3].textContent = (s.projectsDone || 0);
- 
-  // Update hero text
-  const heroP = document.querySelector(".home-hero p");
-  if (heroP) heroP.textContent = `Learning ${profile.field} · Goal: ${profile.goal}`;
- 
-  // Update roadmap card
-  const roadmapCard = document.querySelector(".card:first-child p");
-  if (roadmapCard) roadmapCard.textContent = `${profile.field} roadmap · ${s.roadmapPct || 0}% complete`;
- 
-  // Show AI welcome if exists
+  if (streakVal) streakVal.textContent = streak + " days";
+
+  // ── HERO ──
+  const heroSubtext = document.getElementById("heroSubtext");
+  if (heroSubtext) heroSubtext.textContent = `Learning ${profile.field} · Goal: ${profile.goal}`;
+
+  // ── STAT CARDS ──
+  const homeReadiness = document.getElementById("homeReadiness");
+  const homeReadSub   = document.getElementById("homeReadinessSub");
+  const homeStreak    = document.getElementById("homeStreak");
+  const homeQuizAvg   = document.getElementById("homeQuizAvg");
+  const homeQuizSub   = document.getElementById("homeQuizSub");
+  const homeProjects  = document.getElementById("homeProjectsDone");
+  const homeProjSub   = document.getElementById("homeProjectSub");
+
+  if (homeReadiness) homeReadiness.textContent = readiness + "%";
+  if (homeReadSub)   homeReadSub.textContent   = readiness >= 50 ? "↑ On track!" : "Keep going!";
+  if (homeStreak)    homeStreak.textContent     = streak + " 🔥";
+  if (homeQuizAvg)   homeQuizAvg.textContent    = quizHistory.length > 0 ? quizAvg + "%" : "—";
+  if (homeQuizSub)   homeQuizSub.textContent    = quizHistory.length > 0 ? quizHistory.length + " quizzes taken" : "No quizzes yet";
+  if (homeProjects)  homeProjects.textContent   = completedProjects.length;
+  if (homeProjSub)   homeProjSub.textContent    = completedProjects.length > 0 ? "Next due in 7 days" : "Start your first project";
+
+  // ── ROADMAP CARD ──
+  const roadmapText = document.getElementById("homeRoadmapText");
+  const roadmapBar  = document.getElementById("homeRoadmapBar");
+  if (roadmapText) roadmapText.textContent = `${profile.field} roadmap · ${roadmapPct}% complete`;
+  if (roadmapBar)  roadmapBar.style.width  = roadmapPct + "%";
+  const roadmapBadge = document.querySelector(".nav-item[data-page='roadmap'] .nav-badge");
+  if (roadmapBadge) roadmapBadge.textContent = roadmapPct + "%";
+
+  // ── QUIZ CARD ──
+  const quizText  = document.getElementById("homeQuizText");
+  const quizBadge = document.getElementById("homeQuizBadge");
+  if (quizHistory.length > 0) {
+    const last = quizHistory[quizHistory.length - 1];
+    if (quizText)  quizText.textContent  = `Last: ${last.topic} · ${last.pct}%`;
+    if (quizBadge) { quizBadge.textContent = "Take new quiz"; quizBadge.className = "badge badge-blue"; }
+  } else {
+    if (quizText)  quizText.textContent  = `${profile.field} quiz · 5 questions`;
+    if (quizBadge) { quizBadge.textContent = "Start quiz"; quizBadge.className = "badge badge-orange"; }
+  }
+
+  // ── PROJECT CARD ──
+  const projText = document.getElementById("homeProjectText");
+  const projBar  = document.getElementById("homeProjectBar");
+  if (profile.currentProject) {
+    if (projText) projText.textContent = profile.currentProject.title + " — In Progress";
+    if (projBar)  projBar.style.width  = "15%";
+  } else {
+    if (projText) projText.textContent = "No active project — generate one!";
+    if (projBar)  projBar.style.width  = "0%";
+  }
+
+  // ── AI WELCOME ──
   const aiWelcome = localStorage.getItem("sr_ai_welcome");
   if (aiWelcome) {
-    const heroGlow = document.querySelector(".home-hero-glow");
-    if (heroGlow) {
+    const hero = document.querySelector(".home-hero");
+    if (hero && !hero.querySelector(".ai-welcome-tip")) {
       const tip = document.createElement("div");
+      tip.className = "ai-welcome-tip";
       tip.style.cssText = "margin-top:12px;padding:12px 16px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);border-radius:12px;font-size:0.84rem;color:#00e5a0;line-height:1.6;";
       tip.textContent = "🤖 " + aiWelcome;
-      document.querySelector(".home-hero").appendChild(tip);
+      hero.appendChild(tip);
       localStorage.removeItem("sr_ai_welcome");
     }
   }
+}
+// function applyProfileToUI(profile, stats) {
+//   if (!profile) return;
+//   const s = stats || {};
+ 
+//   // Update topbar readiness pill
+//   const readiness = s.readiness || 10;
+//   const pill = document.querySelector(".ready-pill");
+//   if (pill) pill.innerHTML = `<div class="pulse"></div>${readiness}% Job Ready`;
+ 
+//   // Update streak in sidebar
+//   const streakVal = document.querySelector(".streak-val");
+//   if (streakVal) streakVal.textContent = (s.streak || 1) + " days";
+ 
+//   // Update home stats cards
+//   const statVals = document.querySelectorAll(".s-val");
+//   if (statVals[0]) statVals[0].textContent = readiness + "%";
+//   if (statVals[1]) statVals[1].textContent = (s.streak || 1) + " 🔥";
+//   if (statVals[2]) statVals[2].textContent = (s.quizAvg || 0) + "%";
+//   if (statVals[3]) statVals[3].textContent = (s.projectsDone || 0);
+ 
+//   // Update hero text
+//   const heroP = document.querySelector(".home-hero p");
+//   if (heroP) heroP.textContent = `Learning ${profile.field} · Goal: ${profile.goal}`;
+ 
+//   // Update roadmap card
+//   const roadmapCard = document.querySelector(".card:first-child p");
+//   if (roadmapCard) roadmapCard.textContent = `${profile.field} roadmap · ${s.roadmapPct || 0}% complete`;
+ 
+//   // Show AI welcome if exists
+//   const aiWelcome = localStorage.getItem("sr_ai_welcome");
+//   if (aiWelcome) {
+//     const heroGlow = document.querySelector(".home-hero-glow");
+//     if (heroGlow) {
+//       const tip = document.createElement("div");
+//       tip.style.cssText = "margin-top:12px;padding:12px 16px;background:rgba(0,229,160,0.08);border:1px solid rgba(0,229,160,0.2);border-radius:12px;font-size:0.84rem;color:#00e5a0;line-height:1.6;";
+//       tip.textContent = "🤖 " + aiWelcome;
+//       document.querySelector(".home-hero").appendChild(tip);
+//       localStorage.removeItem("sr_ai_welcome");
+//     }
+//   }
  
   // Update nav roadmap badge
   const roadmapBadge = document.querySelector(".nav-item[data-page='roadmap'] .nav-badge");
